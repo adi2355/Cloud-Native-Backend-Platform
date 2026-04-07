@@ -1,0 +1,354 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1160" viewBox="0 0 1600 1160" role="img" aria-labelledby="title desc">
+  <title id="title">Conflict Resolution Strategy (Config-Driven)</title>
+  <desc id="desc">Strict vertical evaluation path separating top-level entity strategies from field-level merge policies, reflecting optimistic locking outcomes.</desc>
+
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0B1220"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+
+    <!-- Card Gradients -->
+    <linearGradient id="cardGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+    <linearGradient id="mergeGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#172033"/>
+      <stop offset="100%" stop-color="#0B1220"/>
+    </linearGradient>
+    
+    <!-- Accent Gradients -->
+    <linearGradient id="accentBlue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+    <linearGradient id="accentGreen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="accentAmber" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+
+    <!-- Arrow Markers -->
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#94A3B8"/>
+    </marker>
+    <marker id="arrowBlue" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#3B82F6"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#10B981"/>
+    </marker>
+
+    <!-- Drop Shadows -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#3B82F6" flood-opacity="0.25"/>
+    </filter>
+
+    <!-- Grid Pattern -->
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.5" fill="#334155" opacity="0.3"/>
+    </pattern>
+
+    <style>
+      .title { font: 700 32px Inter, -apple-system, sans-serif; fill: #F8FAFC; }
+      .subtitle { font: 400 16px Inter, -apple-system, sans-serif; fill: #94A3B8; }
+      .cardTitle { font: 700 15px Inter, -apple-system, sans-serif; fill: #F8FAFC; }
+      .cardSub { font: 400 13px Inter, -apple-system, sans-serif; fill: #94A3B8; }
+      .codeText { font: 600 13px "JetBrains Mono", monospace; fill: #38BDF8; }
+      .diamondText { font: 700 13px Inter, -apple-system, sans-serif; fill: #E0E7FF; text-anchor: middle; }
+      .pathLabel { font: 600 13px Inter, -apple-system, sans-serif; fill: #CBD5E1; }
+      .badgeText { font: 700 10px "JetBrains Mono", monospace; fill: #34D399; }
+      .outcomeTitle { font: 800 16px "JetBrains Mono", monospace; fill: #FFFFFF; text-anchor: middle; letter-spacing: 0.05em; }
+    </style>
+  </defs>
+
+  <!-- Background Layer -->
+  <rect width="1600" height="1160" rx="24" fill="url(#bg)"/>
+  <rect width="1600" height="1160" fill="url(#grid)"/>
+  <rect x="32" y="32" width="1536" height="1096" rx="20" fill="none" stroke="#1E293B" stroke-width="2"/>
+
+  <!-- Header -->
+  <text x="64" y="84" class="title">Config-Driven Conflict Resolution Subflow</text>
+  <text x="64" y="112" class="subtitle">Strict vertical evaluation path separating top-level strategies from field-level merge policies.</text>
+
+  <!-- Legend -->
+  <g filter="url(#shadow)">
+    <rect x="1320" y="44" width="220" height="100" rx="12" fill="#0F172A" stroke="#334155"/>
+    <text x="1340" y="70" class="cardTitle">Flow Legend</text>
+    <path d="M 1340 85 L 1370 85" stroke="#94A3B8" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="1380" y="89" class="cardSub">Evaluation Path</text>
+    <path d="M 1340 110 L 1370 110" stroke="#38BDF8" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#arrow)"/>
+    <text x="1380" y="114" class="cardSub">Condition / Skips</text>
+  </g>
+
+  <!-- ========================================================= -->
+  <!-- 1. DETECT CONFLICT                                        -->
+  <!-- ========================================================= -->
+  
+  <path d="M 700 200 L 700 240" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  
+  <!-- No Conflict Path -->
+  <path d="M 860 170 L 1400 170 L 1400 1020 L 1250 1020 L 1250 1050" stroke="#38BDF8" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#arrowBlue)"/>
+  <rect x="940" y="158" width="160" height="24" rx="12" fill="#0F172A" stroke="#38BDF8"/>
+  <text x="1020" y="174" text-anchor="middle" class="cardSub" fill="#BAE6FD">No (Versions Match)</text>
+
+  <g filter="url(#shadow)">
+    <rect x="540" y="140" width="320" height="60" rx="12" fill="url(#cardGrad)" stroke="#475569"/>
+    <rect x="540" y="140" width="6" height="60" rx="3" fill="#EF4444"/>
+    <text x="564" y="166" class="cardTitle">Detect Conflict</text>
+    <text x="564" y="186" class="codeText" fill="#FCA5A5">serverVersion &gt; clientVersion</text>
+  </g>
+
+  <!-- ========================================================= -->
+  <!-- 2. LOOKUP CONFIG                                          -->
+  <!-- ========================================================= -->
+  
+  <path d="M 700 300 L 700 340" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+  <g filter="url(#shadow)">
+    <rect x="540" y="240" width="320" height="60" rx="12" fill="url(#cardGrad)" stroke="#475569"/>
+    <rect x="540" y="240" width="6" height="60" rx="3" fill="#3B82F6"/>
+    <text x="564" y="266" class="cardTitle">Lookup Entity Config</text>
+    <text x="564" y="286" class="codeText">fetch ENTITY_CONFLICT_CONFIG</text>
+  </g>
+
+  <!-- ========================================================= -->
+  <!-- 3. CUSTOM MERGE DIAMOND                                   -->
+  <!-- ========================================================= -->
+  
+  <!-- Custom Merge Path (Yes) -->
+  <path d="M 780 380 L 1050 380 L 1050 410" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <rect x="830" y="368" width="46" height="24" rx="12" fill="#1E293B" stroke="#64748B"/>
+  <text x="853" y="384" text-anchor="middle" class="pathLabel">Yes</text>
+
+  <!-- Standard Path (No) -->
+  <path d="M 700 420 L 700 460" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <rect x="677" y="426" width="46" height="24" rx="12" fill="#1E293B" stroke="#64748B"/>
+  <text x="700" y="442" text-anchor="middle" class="pathLabel">No</text>
+
+  <g filter="url(#shadow)">
+    <polygon points="700,340 780,380 700,420 620,380" fill="#1E1B4B" stroke="#8B5CF6" stroke-width="2"/>
+    <text x="700" y="375" class="diamondText">requires</text>
+    <text x="700" y="393" class="diamondText">CustomMerge?</text>
+  </g>
+
+  <!-- ========================================================= -->
+  <!-- 3a. CUSTOM HANDLER BOX                                    -->
+  <!-- ========================================================= -->
+  
+  <!-- Custom Handler to REBASE_AND_RETRY -->
+  <path d="M 1050 470 L 1050 1020 L 710 1020 L 710 1050" stroke="#94A3B8" stroke-width="2" fill="none" stroke-linejoin="round"/>
+
+  <g filter="url(#shadow)">
+    <rect x="910" y="410" width="280" height="60" rx="12" fill="url(#cardGrad)" stroke="#6366F1"/>
+    <rect x="910" y="410" width="6" height="60" rx="3" fill="#8B5CF6"/>
+    <text x="934" y="436" class="cardTitle">Entity Sync Handler</text>
+    <text x="934" y="456" class="cardSub">e.g., sessions, journal_entries</text>
+  </g>
+
+  <!-- ========================================================= -->
+  <!-- 4. TOP-LEVEL STRATEGY DIAMOND & BRANCHES                  -->
+  <!-- ========================================================= -->
+  
+  <!-- Strategy Branches -->
+  <!-- MANUAL -->
+  <path d="M 620 500 L 200 500 L 200 540" stroke="#94A3B8" stroke-width="2" fill="none" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  
+  <!-- SERVER_WINS -->
+  <path d="M 620 500 L 450 500 L 450 540" stroke="#94A3B8" stroke-width="2" fill="none" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  
+  <!-- MERGE -->
+  <path d="M 700 540 L 700 600" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  
+  <!-- CLIENT_WINS -->
+  <path d="M 780 500 L 900 500 L 900 540" stroke="#94A3B8" stroke-width="2" fill="none" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  
+  <!-- LAST_WRITE_WINS -->
+  <path d="M 780 500 L 1150 500 L 1150 540" stroke="#94A3B8" stroke-width="2" fill="none" stroke-linejoin="round" marker-end="url(#arrow)"/>
+
+  <g filter="url(#shadow)">
+    <polygon points="700,460 780,500 700,540 620,500" fill="#1E1B4B" stroke="#8B5CF6" stroke-width="2"/>
+    <text x="700" y="495" class="diamondText">Top-Level</text>
+    <text x="700" y="513" class="diamondText">Strategy?</text>
+  </g>
+
+  <!-- Strategy Nodes -->
+  <!-- MANUAL -->
+  <g filter="url(#shadow)">
+    <rect x="120" y="540" width="160" height="50" rx="8" fill="#451A03" stroke="#F59E0B"/>
+    <text x="200" y="570" text-anchor="middle" class="cardTitle" fill="#FDE68A">MANUAL</text>
+  </g>
+
+  <!-- SERVER_WINS -->
+  <g filter="url(#shadow)">
+    <rect x="370" y="540" width="160" height="50" rx="8" fill="#1E3A8A" stroke="#3B82F6"/>
+    <text x="450" y="570" text-anchor="middle" class="cardTitle" fill="#BFDBFE">SERVER_WINS</text>
+  </g>
+
+  <!-- CLIENT_WINS -->
+  <g filter="url(#shadow)">
+    <rect x="820" y="540" width="160" height="50" rx="8" fill="#064E3B" stroke="#10B981"/>
+    <text x="900" y="570" text-anchor="middle" class="cardTitle" fill="#A7F3D0">CLIENT_WINS</text>
+  </g>
+
+  <!-- LAST_WRITE_WINS -->
+  <path d="M 1150 590 L 1150 640" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <g filter="url(#shadow)">
+    <rect x="1070" y="540" width="160" height="50" rx="8" fill="#0F172A" stroke="#64748B"/>
+    <text x="1150" y="570" text-anchor="middle" class="cardTitle">LAST_WRITE_WINS</text>
+  </g>
+
+
+  <!-- ========================================================= -->
+  <!-- 4a. LAST_WRITE_WINS SUB-PROCESS                           -->
+  <!-- ========================================================= -->
+  
+  <!-- Compare Box -->
+  <g filter="url(#shadow)">
+    <rect x="1050" y="640" width="200" height="50" rx="8" fill="#1E293B" stroke="#94A3B8"/>
+    <rect x="1050" y="640" width="4" height="50" rx="2" fill="#94A3B8"/>
+    <text x="1150" y="660" text-anchor="middle" class="cardTitle">Compare updatedAt</text>
+    <text x="1150" y="678" text-anchor="middle" class="cardSub" font-size="11px">or fallback to version</text>
+  </g>
+
+  <!-- Server Newer Path -->
+  <path d="M 1050 665 L 1020 665 L 1020 990 L 460 990 L 460 1050" stroke="#94A3B8" stroke-width="2" fill="none" stroke-linejoin="round"/>
+  <rect x="965" y="653" width="70" height="24" rx="12" fill="#1E293B" stroke="#64748B"/>
+  <text x="1000" y="669" text-anchor="middle" class="pathLabel" font-size="11px">Server Newer</text>
+
+  <!-- Local Newer Path -->
+  <path d="M 1250 665 L 1280 665 L 1280 1000 L 720 1000 L 720 1050" stroke="#94A3B8" stroke-width="2" fill="none" stroke-linejoin="round"/>
+  <rect x="1255" y="653" width="70" height="24" rx="12" fill="#1E293B" stroke="#64748B"/>
+  <text x="1290" y="669" text-anchor="middle" class="pathLabel" font-size="11px">Local Newer</text>
+
+
+  <!-- ========================================================= -->
+  <!-- 5. THE MERGE PANEL (FIELD-BY-FIELD)                       -->
+  <!-- ========================================================= -->
+  
+  <!-- Outer Grouping Box -->
+  <g filter="url(#glow)">
+    <rect x="470" y="600" width="460" height="330" rx="16" fill="url(#mergeGrad)" stroke="#38BDF8" stroke-dasharray="6 4" stroke-width="2"/>
+  </g>
+  <rect x="470" y="600" width="460" height="36" fill="#0C1524" rx="16" clip-path="inset(0 0 100% 0)"/> <!-- Pseudo-header bg -->
+  <text x="490" y="624" class="cardTitle" fill="#7DD3FC">CONFLICT_STRATEGY.MERGE</text>
+  <text x="700" y="624" class="cardSub" text-anchor="middle">Field-by-Field Evaluation Loop</text>
+  <line x1="470" y1="636" x2="930" y2="636" stroke="#1E293B" stroke-width="2"/>
+
+  <!-- Inner Diamond -->
+  <path d="M 630 670 L 580 670 L 580 730" stroke="#94A3B8" stroke-width="2" fill="none" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <path d="M 770 670 L 820 670 L 820 730" stroke="#94A3B8" stroke-width="2" fill="none" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  
+  <rect x="585" y="658" width="36" height="24" rx="12" fill="#1E293B" stroke="#64748B"/>
+  <text x="603" y="674" text-anchor="middle" class="pathLabel">Yes</text>
+  <rect x="775" y="658" width="36" height="24" rx="12" fill="#1E293B" stroke="#64748B"/>
+  <text x="793" y="674" text-anchor="middle" class="pathLabel">No</text>
+
+  <g filter="url(#shadow)">
+    <polygon points="700,640 770,670 700,700 630,670" fill="#1E1B4B" stroke="#8B5CF6" stroke-width="2"/>
+    <text x="700" y="674" class="diamondText">Explicit Policy?</text>
+  </g>
+
+  <!-- Left: Apply Specific Policy -->
+  <g filter="url(#shadow)">
+    <rect x="490" y="730" width="180" height="110" rx="8" fill="#0F172A" stroke="#475569"/>
+    <rect x="490" y="730" width="4" height="110" rx="2" fill="#34D399"/>
+    <text x="580" y="750" text-anchor="middle" class="cardTitle" font-size="13px">Apply FIELD_POLICY</text>
+    
+    <!-- Policy Badges -->
+    <rect x="502" y="760" width="70" height="20" rx="4" fill="#064E3B"/>
+    <text x="537" y="774" text-anchor="middle" class="badgeText">LOCAL_WINS</text>
+    
+    <rect x="578" y="760" width="80" height="20" rx="4" fill="#064E3B"/>
+    <text x="618" y="774" text-anchor="middle" class="badgeText">SERVER_WINS</text>
+
+    <rect x="502" y="786" width="70" height="20" rx="4" fill="#064E3B"/>
+    <text x="537" y="800" text-anchor="middle" class="badgeText">LAST_WRITE</text>
+    
+    <rect x="578" y="786" width="80" height="20" rx="4" fill="#064E3B"/>
+    <text x="618" y="800" text-anchor="middle" class="badgeText">MERGE_ARRAYS</text>
+
+    <rect x="502" y="812" width="70" height="20" rx="4" fill="#064E3B"/>
+    <text x="537" y="826" text-anchor="middle" class="badgeText">MONOTONIC</text>
+
+    <rect x="578" y="812" width="80" height="20" rx="4" fill="#064E3B"/>
+    <text x="618" y="826" text-anchor="middle" class="badgeText">MAX_MIN_VAL</text>
+  </g>
+
+  <!-- Right: Fallback Policy -->
+  <g filter="url(#shadow)">
+    <rect x="730" y="730" width="180" height="60" rx="8" fill="#0F172A" stroke="#475569"/>
+    <rect x="730" y="730" width="4" height="60" rx="2" fill="#94A3B8"/>
+    <text x="820" y="756" text-anchor="middle" class="cardTitle" font-size="13px">Fallback</text>
+    <text x="820" y="774" text-anchor="middle" class="cardSub" font-size="11px">Apply Entity defaultStrategy</text>
+  </g>
+
+  <!-- Converge & Build -->
+  <path d="M 580 840 L 580 870 L 700 870 L 700 880" stroke="#94A3B8" stroke-width="2" fill="none" stroke-linejoin="round"/>
+  <path d="M 820 790 L 820 870 L 700 870 L 700 880" stroke="#94A3B8" stroke-width="2" fill="none" stroke-linejoin="round"/>
+
+  <g filter="url(#shadow)">
+    <rect x="600" y="880" width="200" height="40" rx="8" fill="#1E293B" stroke="#6366F1"/>
+    <text x="700" y="905" text-anchor="middle" class="cardTitle">Build Merged Entity Payload</text>
+  </g>
+
+
+  <!-- ========================================================= -->
+  <!-- 6. ROUTING BUS TO OUTCOMES                                -->
+  <!-- ========================================================= -->
+  
+  <!-- From MANUAL (Col 200) -->
+  <path d="M 200 590 L 200 1050" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  
+  <!-- From SERVER_WINS (Col 450) -->
+  <path d="M 450 590 L 450 1050" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- From MERGE Panel (Col 700) -->
+  <path d="M 700 920 L 700 1050" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- From CLIENT_WINS (Col 900 -> Col 700) -->
+  <path d="M 900 590 L 900 1010 L 710 1010 L 710 1050" stroke="#94A3B8" stroke-width="2" fill="none" stroke-linejoin="round"/>
+
+
+  <!-- ========================================================= -->
+  <!-- 7. RESOLUTION OUTCOMES (TERMINAL NODES)                   -->
+  <!-- ========================================================= -->
+
+  <!-- Container for emphasis -->
+  <rect x="64" y="1030" width="1436" height="100" rx="16" fill="none" stroke="#1E293B" stroke-dasharray="4 4"/>
+  <text x="84" y="1054" class="cardSub"></text>
+
+  <!-- MANUAL_REQUIRED -->
+  <g filter="url(#shadow)">
+    <rect x="100" y="1050" width="200" height="60" rx="12" fill="#78350F" stroke="#F59E0B" stroke-width="2"/>
+    <text x="200" y="1086" class="outcomeTitle">MANUAL_REQUIRED</text>
+  </g>
+
+  <!-- ADOPT_SERVER -->
+  <g filter="url(#shadow)">
+    <rect x="350" y="1050" width="200" height="60" rx="12" fill="#1E3A8A" stroke="#3B82F6" stroke-width="2"/>
+    <text x="450" y="1086" class="outcomeTitle">ADOPT_SERVER</text>
+  </g>
+
+  <!-- REBASE_AND_RETRY -->
+  <g filter="url(#shadow)">
+    <rect x="600" y="1050" width="200" height="60" rx="12" fill="#065F46" stroke="#10B981" stroke-width="2"/>
+    <text x="700" y="1086" class="outcomeTitle">REBASE_AND_RETRY</text>
+  </g>
+
+  <!-- SKIPPED -->
+  <g filter="url(#shadow)">
+    <rect x="1150" y="1050" width="200" height="60" rx="12" fill="#334155" stroke="#94A3B8" stroke-width="2"/>
+    <text x="1250" y="1086" class="outcomeTitle">SKIPPED</text>
+  </g>
+
+</svg>

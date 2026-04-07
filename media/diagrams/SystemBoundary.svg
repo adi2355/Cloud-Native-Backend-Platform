@@ -1,0 +1,358 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1010" viewBox="0 0 1600 1010" role="img" aria-labelledby="title desc">
+  <title id="title">System Architecture: Runtime Containers &amp; Data Flow</title>
+  <desc id="desc">Definitive component topology showing the strict separation of synchronous API requests, offline-first clients, and asynchronous background processing.</desc>
+
+  <defs>
+    <!-- Backgrounds -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0B1220"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="panelGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+
+    <!-- Accent Gradients -->
+    <linearGradient id="blueAccent" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+    <linearGradient id="tealAccent" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2DD4BF"/>
+      <stop offset="100%" stop-color="#0F766E"/>
+    </linearGradient>
+    <linearGradient id="orangeAccent" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+    <linearGradient id="purpleAccent" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#5B21B6"/>
+    </linearGradient>
+    <linearGradient id="redAccent" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#EF4444"/>
+      <stop offset="100%" stop-color="#991B1B"/>
+    </linearGradient>
+    <linearGradient id="slateAccent" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#64748B"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+
+    <!-- Markers -->
+    <marker id="arrowData" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#38BDF8"/>
+    </marker>
+    <marker id="arrowAsync" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#F59E0B"/>
+    </marker>
+    <marker id="arrowWS" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#A78BFA"/>
+    </marker>
+    <marker id="arrowGeneric" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#94A3B8"/>
+    </marker>
+    <marker id="arrowBLE" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#10B981"/>
+    </marker>
+
+    <!-- Shadows -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+    <filter id="glowTeal" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="#2DD4BF" flood-opacity="0.2"/>
+    </filter>
+    <filter id="glowOrange" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="#F59E0B" flood-opacity="0.2"/>
+    </filter>
+
+    <style>
+      .title { font: 700 32px Inter, -apple-system, sans-serif; fill: #F8FAFC; }
+      .subtitle { font: 400 16px Inter, -apple-system, sans-serif; fill: #94A3B8; }
+      .groupTitle { font: 700 16px Inter, -apple-system, sans-serif; fill: #CBD5E1; letter-spacing: 0.05em; text-transform: uppercase; }
+      .cardTitle { font: 700 18px Inter, -apple-system, sans-serif; fill: #F8FAFC; }
+      .cardMeta { font: 500 13px Inter, -apple-system, sans-serif; fill: #94A3B8; }
+      .listItem { font: 400 14px Inter, -apple-system, sans-serif; fill: #E2E8F0; }
+      .pillText { font: 700 12px "JetBrains Mono", monospace; fill: #FFFFFF; }
+      .linkLabel { font: 600 12px Inter, -apple-system, sans-serif; fill: #E2E8F0; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1600" height="1010" rx="24" fill="url(#bg)"/>
+  <rect x="24" y="24" width="1552" height="962" rx="20" fill="none" stroke="#1E293B" stroke-width="2"/>
+
+  <!-- Header -->
+  <text x="64" y="80" class="title">System Architecture: Runtime Containers &amp; Data Flow</text>
+  <text x="64" y="110" class="subtitle">Definitive component topology showing the strict separation of synchronous API requests, offline-first clients, and asynchronous background processing.</text>
+
+  <!-- Legend -->
+  <rect x="1230" y="46" width="300" height="100" rx="12" fill="rgba(15, 23, 42, 0.8)" stroke="#334155"/>
+  <text x="1250" y="70" class="cardTitle" font-size="14px">Flow Legend</text>
+  
+  <path d="M 1250 90 L 1290 90" stroke="#38BDF8" stroke-width="3" fill="none" marker-end="url(#arrowData)"/>
+  <text x="1305" y="94" class="cardMeta" fill="#E2E8F0">Synchronous API / Read / Write</text>
+  
+  <path d="M 1250 110 L 1290 110" stroke="#F59E0B" stroke-width="3" stroke-dasharray="6,4" fill="none" marker-end="url(#arrowAsync)"/>
+  <text x="1305" y="114" class="cardMeta" fill="#E2E8F0">Asynchronous Job / Outbox Event</text>
+
+  <path d="M 1250 130 L 1290 130" stroke="#A78BFA" stroke-width="3" stroke-dasharray="3,3" fill="none" marker-end="url(#arrowWS)"/>
+  <text x="1305" y="134" class="cardMeta" fill="#E2E8F0">WebSocket / Real-time PubSub</text>
+
+  <!-- ========================================================= -->
+  <!-- COLUMN 1: CLIENTS & SOURCES                               -->
+  <!-- ========================================================= -->
+  <text x="64" y="180" class="groupTitle">Client Applications &amp; Sources</text>
+
+  <!-- Mobile App -->
+  <g filter="url(#shadow)">
+    <rect x="64" y="200" width="270" height="190" rx="16" fill="rgba(30, 41, 59, 0.6)" stroke="#1E40AF" stroke-width="2"/>
+    <rect x="64" y="200" width="8" height="190" rx="4" fill="url(#blueAccent)"/>
+    
+    <text x="88" y="234" class="cardTitle">Mobile App (iOS/Android)</text>
+    <rect x="88" y="246" width="105" height="22" rx="6" fill="#1E3A8A" stroke="#3B82F6"/>
+    <text x="140" y="261" text-anchor="middle" class="pillText">Offline-First</text>
+    
+    <circle cx="94" cy="285" r="4" fill="#38BDF8"/>
+    <text x="108" y="290" class="listItem">Local SQLite DB &amp; Cursor State</text>
+    <circle cx="94" cy="315" r="4" fill="#38BDF8"/>
+    <text x="108" y="320" class="listItem">HealthSync &amp; Upload Engine</text>
+    <circle cx="94" cy="345" r="4" fill="#38BDF8"/>
+    <text x="108" y="350" class="listItem">Generic DataSyncService</text>
+    <circle cx="94" cy="375" r="4" fill="#38BDF8"/>
+    <text x="108" y="380" class="listItem">Real-time WebSocket Client</text>
+  </g>
+
+  <!-- HealthKit / OS -->
+  <g filter="url(#shadow)">
+    <rect x="64" y="420" width="270" height="70" rx="12" fill="rgba(30, 41, 59, 0.6)" stroke="#BE185D" stroke-width="2"/>
+    <rect x="64" y="420" width="8" height="70" rx="4" fill="#EC4899"/>
+    <text x="88" y="446" class="cardTitle" font-size="15px">Mobile OS Health Systems</text>
+    <text x="88" y="468" class="cardMeta">Apple HealthKit / Health Connect</text>
+  </g>
+
+  <!-- BLE Device -->
+  <g filter="url(#shadow)">
+    <rect x="64" y="520" width="270" height="80" rx="12" fill="rgba(30, 41, 59, 0.6)" stroke="#047857" stroke-width="2"/>
+    <rect x="64" y="520" width="8" height="80" rx="4" fill="#10B981"/>
+    <text x="88" y="548" class="cardTitle" font-size="13px">Embedded BLE Device</text>
+    <text x="88" y="570" class="cardMeta">Binary Protocol, NimBLE</text>
+  </g>
+
+
+  <!-- ========================================================= -->
+  <!-- CENTER: BACKEND RUNTIME (WEB vs WORKER)                   -->
+  <!-- ========================================================= -->
+  <text x="440" y="180" class="groupTitle">Backend Runtime Services</text>
+
+  <!-- Web Service -->
+  <g filter="url(#glowTeal)">
+    <rect x="440" y="200" width="340" height="190" rx="16" fill="rgba(15, 23, 42, 0.8)" stroke="#0F766E" stroke-width="2"/>
+    <rect x="440" y="200" width="8" height="190" rx="4" fill="url(#tealAccent)"/>
+    
+    <text x="464" y="234" class="cardTitle">Backend Web Service</text>
+    <rect x="464" y="246" width="100" height="22" rx="6" fill="#042F2E" stroke="#10B981"/>
+    <text x="514" y="261" text-anchor="middle" class="pillText">Synchronous</text>
+    
+    <circle cx="470" cy="285" r="4" fill="#2DD4BF"/>
+    <text x="484" y="290" class="listItem">HTTP REST API &amp; Gateway</text>
+    <circle cx="470" cy="315" r="4" fill="#2DD4BF"/>
+    <text x="484" y="320" class="listItem">WebSocket Gateway (Socket.IO)</text>
+    <circle cx="470" cy="345" r="4" fill="#2DD4BF"/>
+    <text x="484" y="350" class="listItem">Auth &amp; Admission Control (Leases)</text>
+    <circle cx="470" cy="375" r="4" fill="#2DD4BF"/>
+    <text x="484" y="380" class="listItem">Transactional Outbox Commits</text>
+  </g>
+
+  <!-- Worker Service -->
+  <g filter="url(#glowOrange)">
+    <rect x="820" y="200" width="340" height="190" rx="16" fill="rgba(15, 23, 42, 0.8)" stroke="#B45309" stroke-width="2"/>
+    <rect x="820" y="200" width="8" height="190" rx="4" fill="url(#orangeAccent)"/>
+    
+    <text x="844" y="234" class="cardTitle">Backend Worker Service</text>
+    <rect x="844" y="246" width="105" height="22" rx="6" fill="#451A03" stroke="#F59E0B"/>
+    <text x="896" y="261" text-anchor="middle" class="pillText">Asynchronous</text>
+    
+    <circle cx="850" cy="285" r="4" fill="#F59E0B"/>
+    <text x="864" y="290" class="listItem">BullMQ Job Processors</text>
+    <circle cx="850" cy="315" r="4" fill="#F59E0B"/>
+    <text x="864" y="320" class="listItem">Outbox Event Fan-out &amp; Delivery</text>
+    <circle cx="850" cy="345" r="4" fill="#F59E0B"/>
+    <text x="864" y="350" class="listItem">Health Projection Coordinator</text>
+    <circle cx="850" cy="375" r="4" fill="#F59E0B"/>
+    <text x="864" y="380" class="listItem">Telemetry Compute &amp; Cleanup Reapers</text>
+  </g>
+
+
+  <!-- ========================================================= -->
+  <!-- BOTTOM ROW: DATA PERSISTENCE                              -->
+  <!-- ========================================================= -->
+  <text x="440" y="705" class="groupTitle">Data Persistence &amp; Message Brokers</text>
+
+  <!-- PostgreSQL -->
+  <g filter="url(#shadow)">
+    <rect x="440" y="530" width="220" height="150" rx="12" fill="rgba(30, 41, 59, 0.6)" stroke="#4338CA" stroke-width="2"/>
+    <rect x="440" y="530" width="8" height="150" rx="4" fill="url(#purpleAccent)"/>
+    <text x="464" y="560" class="cardTitle">PostgreSQL DB</text>
+    <rect x="464" y="570" width="125" height="20" rx="4" fill="#312E81" stroke="#6366F1"/>
+    <text x="526" y="584" text-anchor="middle" class="pillText" font-size="11px">Canonical Source</text>
+
+    <text x="464" y="615" class="cardMeta">Core Entities &amp; Sync State</text>
+    <text x="464" y="635" class="cardMeta">Raw Health Samples</text>
+    <text x="464" y="655" class="cardMeta">Projection Read Models</text>
+    <text x="464" y="675" class="cardMeta">Outbox Events</text>
+  </g>
+
+  <!-- Redis Cache -->
+  <g filter="url(#shadow)">
+    <rect x="690" y="530" width="220" height="150" rx="12" fill="rgba(30, 41, 59, 0.6)" stroke="#B91C1C" stroke-width="2"/>
+    <rect x="690" y="530" width="8" height="150" rx="4" fill="url(#redAccent)"/>
+    <text x="714" y="560" class="cardTitle">Redis (Cache)</text>
+    <rect x="714" y="570" width="100" height="20" rx="4" fill="#450A0A" stroke="#EF4444"/>
+    <text x="764" y="584" text-anchor="middle" class="pillText" font-size="11px">Volatile TTL</text>
+
+    <text x="714" y="615" class="cardMeta">API Response Caches</text>
+    <text x="714" y="635" class="cardMeta">Distributed Adv. Locks</text>
+    <text x="714" y="655" class="cardMeta">Rate Limit Counters</text>
+  </g>
+
+  <!-- Redis BullMQ -->
+  <g filter="url(#shadow)">
+    <rect x="940" y="530" width="220" height="150" rx="12" fill="rgba(30, 41, 59, 0.6)" stroke="#B91C1C" stroke-width="2"/>
+    <rect x="940" y="530" width="8" height="150" rx="4" fill="url(#redAccent)"/>
+    <text x="964" y="560" class="cardTitle">Redis (Messaging)</text>
+    <rect x="964" y="570" width="90" height="20" rx="4" fill="#450A0A" stroke="#EF4444"/>
+    <text x="1009" y="584" text-anchor="middle" class="pillText" font-size="11px">NoEviction</text>
+
+    <text x="964" y="615" class="cardMeta">BullMQ Job Queues</text>
+    <text x="964" y="635" class="cardMeta">Job State &amp; Retries</text>
+    <text x="964" y="655" class="cardMeta">Socket.IO Pub/Sub</text>
+  </g>
+
+
+  <!-- ========================================================= -->
+  <!-- COLUMN 4: EXTERNAL INFRASTRUCTURE                         -->
+  <!-- ========================================================= -->
+  <text x="1200" y="180" class="groupTitle">Cloud Infrastructure &amp; 3rd Party</text>
+
+  <g filter="url(#shadow)">
+    <rect x="1200" y="200" width="280" height="430" rx="16" fill="rgba(15, 23, 42, 0.6)" stroke="#334155" stroke-width="2"/>
+    <rect x="1200" y="200" width="8" height="430" rx="4" fill="url(#slateAccent)"/>
+
+    <text x="1224" y="234" class="cardTitle">AWS &amp; External APIs</text>
+
+    <rect x="1224" y="260" width="230" height="40" rx="6" fill="#1E293B" stroke="#475569"/>
+    <text x="1240" y="285" class="listItem">AWS Cognito (Auth/IAM)</text>
+
+    <rect x="1224" y="315" width="230" height="40" rx="6" fill="#1E293B" stroke="#475569"/>
+    <text x="1240" y="340" class="listItem">Google OAuth (Federation)</text>
+
+    <rect x="1224" y="370" width="230" height="40" rx="6" fill="#1E293B" stroke="#475569"/>
+    <text x="1240" y="395" class="listItem">AWS Secrets Manager</text>
+
+    <rect x="1224" y="425" width="230" height="40" rx="6" fill="#1E293B" stroke="#475569"/>
+    <text x="1240" y="450" class="listItem">Anthropic AI (LLM Engine)</text>
+
+    <rect x="1224" y="480" width="230" height="40" rx="6" fill="#1E293B" stroke="#475569"/>
+    <text x="1240" y="505" class="listItem">AWS S3 (Blob Storage)</text>
+
+    <rect x="1224" y="535" width="230" height="40" rx="6" fill="#1E293B" stroke="#475569"/>
+    <text x="1240" y="560" class="listItem">CloudWatch &amp; OTEL</text>
+  </g>
+
+
+  <!-- ========================================================= -->
+  <!-- CROSS-CUTTING CONCERNS BAND                               -->
+  <!-- ========================================================= -->
+  <g filter="url(#shadow)">
+    <rect x="64" y="770" width="1456" height="110" rx="16" fill="rgba(15, 23, 42, 0.8)" stroke="#334155" stroke-width="2"/>
+  </g>
+  <text x="88" y="804" class="cardTitle">Cross-Cutting Architectural Policies</text>
+  <text x="88" y="824" class="cardMeta">Enforced globally via Shared Contracts, Middleware, and Composition Root.</text>
+
+  <rect x="88" y="840" width="320" height="24" rx="12" fill="#1E293B" stroke="#475569"/>
+  <text x="248" y="857" text-anchor="middle" class="listItem">Validation &amp; Integrity (Zod, Payload Hashes)</text>
+
+  <rect x="428" y="840" width="340" height="24" rx="12" fill="#1E293B" stroke="#475569"/>
+  <text x="598" y="857" text-anchor="middle" class="listItem">Concurrency Control (Optimistic/Distributed Locks)</text>
+
+  <rect x="788" y="840" width="310" height="24" rx="12" fill="#1E293B" stroke="#475569"/>
+  <text x="943" y="857" text-anchor="middle" class="listItem">Read Consistency (Watermark Freshness)</text>
+
+  <rect x="1118" y="840" width="380" height="24" rx="12" fill="#1E293B" stroke="#475569"/>
+  <text x="1308" y="857" text-anchor="middle" class="listItem">Observability (Correlation IDs, Structured Logging)</text>
+
+
+  <!-- ========================================================= -->
+  <!-- ARROW ROUTING                                             -->
+  <!-- ========================================================= -->
+
+  <!-- HealthKit -> Mobile App -->
+  <path d="M 214 420 L 214 390" stroke="#94A3B8" stroke-width="3" fill="none" marker-end="url(#arrowGeneric)"/>
+
+  <!-- Mobile App -> Web Service (HTTP) -->
+  <path d="M 334 240 L 440 240" stroke="#38BDF8" stroke-width="3" fill="none" marker-end="url(#arrowData)"/>
+  <rect x="356" y="228" width="62" height="20" rx="4" fill="#0F172A" stroke="#1E293B"/>
+  <text x="387" y="242" text-anchor="middle" class="linkLabel" fill="#38BDF8">REST API</text>
+
+  <!-- Mobile App -> Web Service (WebSocket) -->
+  <path d="M 334 340 L 440 340" stroke="#A78BFA" stroke-width="3" stroke-dasharray="4,4" fill="none" marker-end="url(#arrowWS)"/>
+  <rect x="354" y="328" width="66" height="20" rx="4" fill="#0F172A" stroke="#1E293B"/>
+  <text x="387" y="342" text-anchor="middle" class="linkLabel" fill="#A78BFA">Live Events</text>
+
+  <!-- BLE Device -> Mobile App (Bluetooth) -->
+  <path d="M 334 555 L 354 555 L 354 295 L 334 295" stroke="#10B981" stroke-width="3" fill="none" marker-end="url(#arrowBLE)"/>
+  <rect x="336" y="495" width="36" height="20" rx="4" fill="#0F172A" stroke="#1E293B"/>
+  <text x="354" y="509" text-anchor="middle" class="linkLabel" fill="#10B981">BLE</text>
+
+  <!-- === Arrow Paths (drawn first so labels render on top) === -->
+
+  <!-- Web Service -> PostgreSQL -->
+  <path d="M 500 390 L 500 530" stroke="#38BDF8" stroke-width="3" fill="none" marker-end="url(#arrowData)"/>
+  <!-- Web Service -> Redis Cache -->
+  <path d="M 600 390 L 600 430 L 740 430 L 740 530" stroke="#38BDF8" stroke-width="3" fill="none" marker-end="url(#arrowData)"/>
+  <!-- Web Service -> Redis BullMQ -->
+  <path d="M 700 390 L 700 410 L 1020 410 L 1020 530" stroke="#F59E0B" stroke-width="3" stroke-dasharray="6,4" fill="none" marker-end="url(#arrowAsync)"/>
+  <!-- Worker Service -> Redis BullMQ -->
+  <path d="M 940 390 L 940 530" stroke="#F59E0B" stroke-width="3" stroke-dasharray="6,4" fill="none" marker-end="url(#arrowAsync)"/>
+  <!-- Worker Service -> PostgreSQL -->
+  <path d="M 870 390 L 870 460 L 590 460 L 590 530" stroke="#38BDF8" stroke-width="3" fill="none" marker-end="url(#arrowData)"/>
+  <!-- Worker Service -> Redis Cache -->
+  <path d="M 830 390 L 830 450 L 800 450 L 800 530" stroke="#38BDF8" stroke-width="3" fill="none" marker-end="url(#arrowData)"/>
+  <!-- Web Service -> External Services (Auth, Secrets) -->
+  <path d="M 780 200 L 780 190 L 1192 190 L 1192 280 L 1200 280" stroke="#38BDF8" stroke-width="3" fill="none" marker-end="url(#arrowData)"/>
+  <!-- Worker Service -> External Services (AI, Storage, OTEL) -->
+  <path d="M 1160 320 L 1200 320" stroke="#38BDF8" stroke-width="3" fill="none" marker-end="url(#arrowData)"/>
+
+  <!-- === Arrow Labels (rendered on top of all paths for readability) === -->
+
+  <!-- Tx Writes & Outbox -->
+  <rect x="444" y="424" width="112" height="22" rx="4" fill="#0F172A" stroke="#1E293B"/>
+  <text x="500" y="440" text-anchor="middle" class="linkLabel" fill="#38BDF8">Tx Writes &amp; Outbox</text>
+
+  <!-- Check/Set -->
+  <rect x="632" y="416" width="76" height="22" rx="4" fill="#0F172A" stroke="#1E293B"/>
+  <text x="670" y="432" text-anchor="middle" class="linkLabel" fill="#38BDF8">Check/Set</text>
+
+  <!-- Enqueue Jobs & WS -->
+  <rect x="906" y="396" width="142" height="22" rx="4" fill="#0F172A" stroke="#1E293B"/>
+  <text x="977" y="412" text-anchor="middle" class="linkLabel" fill="#F59E0B">Enqueue Jobs &amp; WS</text>
+
+  <!-- Poll/Dequeue Jobs -->
+  <rect x="882" y="424" width="116" height="22" rx="4" fill="#0F172A" stroke="#1E293B"/>
+  <text x="940" y="440" text-anchor="middle" class="linkLabel" fill="#F59E0B">Poll/Dequeue Jobs</text>
+
+  <!-- Read Raw, Write Projections -->
+  <rect x="670" y="446" width="160" height="22" rx="4" fill="#0F172A" stroke="#1E293B"/>
+  <text x="750" y="462" text-anchor="middle" class="linkLabel" fill="#38BDF8">Read Raw, Write Projections</text>
+
+  <!-- Auth & Configuration -->
+  <rect x="922" y="176" width="128" height="22" rx="4" fill="#0F172A" stroke="#1E293B"/>
+  <text x="986" y="192" text-anchor="middle" class="linkLabel" fill="#38BDF8">Auth &amp; Configuration</text>
+
+  <!-- AI & S3 -->
+  <rect x="1151" y="306" width="58" height="22" rx="4" fill="#0F172A" stroke="#1E293B"/>
+  <text x="1180" y="322" text-anchor="middle" class="linkLabel" fill="#38BDF8">AI &amp; S3</text>
+
+</svg>

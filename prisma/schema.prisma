@@ -1,0 +1,1036 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL") // Required for Neon connection pooling
+}
+
+model User {
+  id                   String        @id @default(uuid())
+  username             String        @unique @db.Citext
+  email                String?       @unique @db.Citext
+  emailVerified        Boolean       @default(false)
+  phoneNumber          String?       @unique
+  phoneNumberVerified  Boolean       @default(false)
+  passwordHash         String?
+  name                 String
+  avatarUrl            String?
+  dateOfBirth          DateTime?     @db.Date
+  authProvider         AuthProvider  @default(COGNITO)
+  cognitoSub           String?       @unique
+  googleId             String?       @unique
+  mfaEnabled           Boolean       @default(false)
+  lastSignIn           DateTime?     @db.Timestamptz(6)
+  signInCount          Int           @default(0)
+  userType             UserType      @default(STANDARD)
+  privacySettings      Json?         @default("{\"allowAnalytics\": true, \"shareUsageData\": true, \"marketingEmails\": false, \"dataRetentionPeriod\": 365}")
+  notificationSettings    Json?         @default("{\"pushNotifications\": true, \"emailNotifications\": true, \"achievementAlerts\": true, \"goalReminders\": true}")
+  onboardingPreferences   Json?         // No default - use DEFAULT_ONBOARDING_PREFERENCES from shared contract (single source of truth)
+  accountStatus           AccountStatus @default(PENDING_VERIFICATION)
+  createdAt            DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt            DateTime      @updatedAt @db.Timestamptz(6)
+
+  // Optimistic locking for conflict resolution
+  version Int @default(1)
+
+  refreshTokens        RefreshToken[]
+  syncOperations       SyncOperation[]
+  sessions             Session[]
+  devices              Device[]
+  deviceTelemetry      DeviceTelemetry[]
+  healthSamples           HealthSample[]
+  healthIngestRequests    HealthIngestRequest[]
+  sessionTelemetryCaches  SessionTelemetryCache[]
+  healthWatermark         UserHealthWatermark?
+  healthRollupDays        UserHealthRollupDay[]
+  sleepNightSummaries     UserSleepNightSummary[]
+  sessionImpactSummaries  UserSessionImpactSummary[]
+  productImpactRollups    UserProductImpactRollup[]
+
+  @@index([email])
+  @@index([phoneNumber])
+  @@index([cognitoSub])
+  @@index([googleId])
+}
+
+model RefreshToken {
+  id         String    @id @default(uuid())
+  token      String    @unique
+  userId     String
+  deviceId   String?
+  deviceInfo Json?
+  ipAddress  String?   @db.Inet
+  userAgent  String?
+  expiresAt  DateTime  @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
+  revokedAt  DateTime? @db.Timestamptz(6)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  // @@index([token]) // Removed: Redundant with @unique constraint on token field
+  @@index([expiresAt])
+}
+
+model Session {
+  id              String  @id @default(uuid())
+  userId          String
+  deviceId        String? @map("device_id")
+  clientSessionId String? @map("client_session_id")
+
+  sessionStartTimestamp DateTime  @db.Timestamptz(6)
+  sessionEndTimestamp   DateTime? @db.Timestamptz(6) // Nullable: active sessions have no end time yet
+  eventCount              Int       @default(0)
+  totalDurationMs       Int       @default(0)
+  avgEventDurationMs      Float     @default(0)
+
+  // User-provided notes for this session (synced from local-first app)
+  notes String? @db.Text
+
+  // Session status for local-first sync support
+  // Values: 'active', 'completed', 'paused', 'cancelled'
+  status SessionStatus @default(ACTIVE)
+
+  // Optimistic locking for conflict resolution
+  version Int @default(1)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  device           Device?           @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Session telemetry caches for vitals visualization (multiple resolutions/versions)
+  telemetryCaches SessionTelemetryCache[]
+
+  // Derived: Pre-bed session correlation for sleep summaries
+  sleepNightSummaries UserSleepNightSummary[]
+  // Derived: Session impact summaries (before/during/after health metrics)
+  sessionImpactSummaries UserSessionImpactSummary[]
+
+  @@unique([userId, clientSessionId], name: "user_clientSessionId_unique")
+  @@index([userId])
+  @@index([deviceId])
+  @@index([userId, sessionStartTimestamp])
+  @@index([userId, sessionEndTimestamp])
+}
+
+model SyncOperation {
+  id                    String     @id @default(uuid())
+  userId                String
+  deviceId              String? // Device that initiated the sync operation
+  operationType         SyncType
+  status                SyncStatus @default(PENDING)
+  lastSyncAt            DateTime?  @db.Timestamptz(6)
+  dataHash              String?
+  conflictCount         Int        @default(0)
+  resolvedCount         Int        @default(0)
+  errorMessage          String?
+  // Push-level idempotency: client-provided operation ID for dedup on retries.
+  // When a push request is retried with the same clientSyncOperationId, the server
+  // returns the cached resultPayload instead of re-processing all changes.
+  clientSyncOperationId String? // Client-generated sync operation ID for idempotency
+  resultPayload         Json?   // Cached PushSyncResult for idempotent retry responses
+  createdAt             DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime   @updatedAt @db.Timestamptz(6)
+  user                  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clientSyncOperationId])
+  @@index([userId])
+  @@index([deviceId])
+  @@index([status])
+  @@index([operationType])
+}
+
+model SyncState {
+  id             String    @id @default(uuid())
+  userId         String
+  deviceId       String
+  lastSyncToken  String? // Legacy support - will be deprecated in favor of lastCursor
+  lastCursor     String? // New cursor-based approach for efficient pagination
+  lastSyncAt     DateTime? @db.Timestamptz(6)
+  pendingChanges Int       @default(0)
+  syncInProgress Boolean   @default(false)
+  lockOwner      String? // Service instance that owns the sync lock
+  lockAcquiredAt DateTime? @db.Timestamptz(6) // When the lock was acquired
+  syncVersion    Int       @default(1)
+  metadata       Json?
+  createdAt      DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @db.Timestamptz(6)
+
+  // Optimistic locking for conflict resolution
+  version Int @default(1)
+
+  @@unique([userId, deviceId], name: "userId_deviceId")
+  @@index([userId])
+  @@index([deviceId])
+  @@index([syncInProgress])
+  @@index([lastSyncAt])
+  @@index([lockOwner])
+  @@index([lockAcquiredAt])
+}
+
+model SyncConflict {
+  id              String              @id @default(uuid())
+  userId          String
+  entityType      String
+  entityId        String
+  localVersion    Json
+  remoteVersion   Json
+  resolution      ConflictResolution?
+  resolvedAt      DateTime?
+  resolvedBy      String? // userId who resolved the conflict
+  syncOperationId String?
+  metadata        Json?
+  createdAt       DateTime            @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime            @updatedAt @db.Timestamptz(6)
+
+  @@unique([userId, entityType, entityId], name: "user_entity_unique")
+  @@index([userId])
+  @@index([entityType])
+  @@index([resolution])
+  @@index([createdAt])
+}
+
+model SyncChange {
+  id              String     @id @default(uuid())
+  userId          String
+  deviceId        String
+  changeType      ChangeType
+  entityType      String
+  entityId        String
+  changeData      Json
+  syncVersion     Int        @default(1)
+  applied         Boolean    @default(false)
+  appliedAt       DateTime?
+  rejected        Boolean    @default(false)
+  rejectionReason String?
+  createdAt       DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime   @updatedAt @db.Timestamptz(6)
+
+  @@unique([userId, deviceId, entityType, entityId, syncVersion], name: "userId_deviceId_entityType_entityId_syncVersion")
+  @@index([userId])
+  @@index([deviceId])
+  @@index([changeType])
+  @@index([entityType])
+  @@index([applied])
+  @@index([rejected])
+  @@index([syncVersion])
+  @@index([createdAt])
+}
+
+model Device {
+  id         String       @id @default(uuid())
+  userId     String
+  deviceName String
+  type       DeviceType   @default(OTHER)
+  status     DeviceStatus @default(UNPAIRED)
+
+  // Identity (nullable because mobile OSes may hide real MAC)
+  macAddress   String? @unique
+  bluetoothId  String? @unique
+  serialNumber String? @unique
+
+  // Hardware information
+  brand           String?
+  model           String?
+  firmwareVersion String?
+  hardwareVersion String?
+
+  // Health/lifecycle
+  isActive     Boolean   @default(true)
+  lastSeen     DateTime?
+  batteryLevel Float?
+
+  // Calibration/settings/specs (keep JSON for flexibility)
+  requiresCalibration Boolean   @default(false)
+  lastCalibrated      DateTime?
+  calibrationData     Json?
+  settings            Json?     @default("{}")
+  specifications      Json?
+
+  // Pairing lifecycle
+  pairedAt DateTime?
+
+  // Legacy back-compat (read-only; plan to drop later)
+  deviceType String? @map("device_type")
+
+  // Optimistic locking for conflict resolution
+  version Int @default(1)
+
+  // Timestamps
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions        Session[]
+  deviceTelemetry DeviceTelemetry[]
+  // @@index([bluetoothId]) // Removed: Redundant with @unique constraint on bluetoothId field
+
+  // Indexes
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@index([lastSeen])
+  @@index([isActive])
+}
+
+model OutboxEvent {
+  id            String       @id @default(uuid())
+  aggregateId   String
+  aggregateType String
+  eventType     String
+  payload       Json
+  status        OutboxStatus @default(PENDING)
+  retryCount    Int          @default(0)
+  maxRetries    Int          @default(3)
+  processedAt   DateTime?
+  error         String?
+  eventHash     String       @map("event_hash") // For deduplication - now required
+  nextAttemptAt DateTime?    @map("next_attempt_at") @db.Timestamptz(6) // Crash-safe retry scheduling. NULL = immediately eligible for processing.
+  dedupeKey     String?      @map("dedupe_key") // Request-level dedup key for atomic health ingest. Partial unique index guards inflight events only.
+  createdAt     DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime     @updatedAt @db.Timestamptz(6)
+  projectionCheckpoints ProjectionCheckpoint[]
+
+  @@unique([aggregateId, aggregateType, eventType, eventHash]) // Prevent duplicate events
+  @@index([status, createdAt])
+  @@index([status, nextAttemptAt]) // Polling query: WHERE status='PENDING' AND (nextAttemptAt IS NULL OR nextAttemptAt <= NOW())
+  @@index([aggregateId])
+  @@index([aggregateType])
+  @@index([eventType])
+  // NOTE: Partial unique index on dedupe_key created via raw SQL migration (not expressible in Prisma schema)
+}
+
+model DeviceTelemetry {
+  id        String   @id @default(uuid())
+  userId    String
+  deviceId  String
+  timestamp DateTime @db.Timestamptz(6)
+  metrics   Json // Flexible device metrics (temperature, humidity, sensor data, etc.)
+  sessionId String?
+  ttl       Int? // For programmatic cleanup (PostgreSQL doesn't have native TTL)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, timestamp(sort: Desc)]) // For time-series queries by device
+  @@index([userId, timestamp(sort: Desc)]) // For user-specific telemetry queries
+  @@index([timestamp]) // For cleanup operations
+}
+
+model AnalyticsEvent {
+  id             String   @id @default(uuid())
+  userId         String
+  eventType      String
+  eventTimestamp DateTime @db.Timestamptz(6)
+  eventData      Json // Flexible event data
+  correlationId  String?
+  sessionId      String?
+  productId      String?
+  ttl            Int? // For programmatic cleanup
+  createdAt      DateTime @default(now()) @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, eventTimestamp(sort: Desc)]) // For user-specific analytics queries
+  @@index([eventType, eventTimestamp(sort: Desc)]) // For event-type specific queries
+  @@index([eventTimestamp]) // For cleanup operations
+}
+
+enum AuthProvider {
+  COGNITO
+  GOOGLE
+  PHONE
+  EMAIL
+}
+
+enum UserType {
+  STANDARD
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+  DELETED // Changed from DEACTIVATED to match frontend types.ts
+}
+
+enum SyncType {
+  PUSH
+  PULL
+  FULL
+}
+
+enum SyncStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CONFLICT
+}
+
+enum OutboxStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  DEAD_LETTER
+}
+
+// Session status for local-first architecture
+// Allows frontend to track session state independently
+enum SessionStatus {
+  ACTIVE // Session is ongoing
+  COMPLETED // Session ended normally
+  PAUSED // Session temporarily paused
+  CANCELLED // Session was cancelled/aborted
+}
+
+enum DeviceType {
+  BLUETOOTH_SENSOR
+  TEMPERATURE_SENSOR
+  HUMIDITY_SENSOR
+  SCALE
+  SENSOR
+  OTHER
+}
+
+enum DeviceStatus {
+  UNPAIRED // seen but not claimed/linked to a user yet
+  ACTIVE // paired & healthy
+  INACTIVE // paired but disabled by user
+  OFFLINE // paired but not seen recently
+  CALIBRATING // in a calibration flow
+  ERROR // device reported error or repeated failures
+  DECOMMISSIONED // retired, soft-deleted from active lists
+}
+
+enum ConflictResolution {
+  LOCAL_WINS
+  REMOTE_WINS
+  MERGE
+  MANUAL
+}
+
+enum ChangeType {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+/// Health sample from HealthKit/Health Connect.
+///
+/// ARCHITECTURE:
+/// - Single table for all metric types (differentiated by metricCode)
+/// - Push-only sync (device → server, no pull)
+/// - Two-layer idempotency: requestId + (userId, sourceId, sourceRecordId)
+/// - Indefinite retention (no compaction)
+///
+/// DATA MODEL (Discriminated Union):
+/// - NUMERIC samples (SCALAR_NUM, CUMULATIVE_NUM, INTERVAL_NUM): value + unit present, categoryCode NULL
+/// - CATEGORY samples (e.g., sleep_stage): categoryCode present, value + unit NULL
+///
+/// INVARIANTS (enforced by CHECK constraints in migration):
+/// - metricCode must be a valid HealthMetricCode from shared contracts
+/// - value must be non-negative when present
+/// - startAt must be <= endAt
+/// - (value IS NULL) == (unit IS NULL) - both present or both absent
+/// - NOT (value IS NOT NULL AND categoryCode IS NOT NULL) - mutual exclusivity
+/// - (value IS NOT NULL) OR (categoryCode IS NOT NULL) - at least one value type
+/// - sourceRecordId is unique per (userId, sourceId) - the OS-assigned record ID
+model HealthSample {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+
+  // Source identification for idempotency
+  sourceId       String   @map("source_id")       // "healthkit" | "health_connect" | "manual"
+  sourceRecordId String   @map("source_record_id") // OS-assigned record ID (opaque)
+
+  // Metric data
+  metricCode     String   @map("metric_code")     // e.g., "heart_rate", "steps", "sleep_duration"
+
+  // This column serves as the discriminator for the value shape union.
+  // Enforced by CHECK constraints in migration to prevent invalid states.
+  //
+  // Valid values (aligned with shared contracts):
+  // - 'SCALAR_NUM': Point-in-time numeric (heart_rate, blood_oxygen)
+  // - 'CUMULATIVE_NUM': Accumulated numeric (steps, distance)
+  // - 'INTERVAL_NUM': Duration-based numeric (sleep_duration, exercise_time)
+  // - 'CATEGORY': Non-numeric categorical (sleep_stage, workout_type)
+  //
+  // INVARIANTS (enforced by CHECK constraints):
+  // - SCALAR_NUM/CUMULATIVE_NUM/INTERVAL_NUM: value + unit NOT NULL, categoryCode NULL
+  // - CATEGORY: categoryCode NOT NULL, value + unit NULL
+  valueKind      String   @map("value_kind")      // 'SCALAR_NUM' | 'CUMULATIVE_NUM' | 'INTERVAL_NUM' | 'CATEGORY'
+
+  // NUMERIC samples: value + unit both present (NULL for CATEGORY samples)
+  value          Decimal?  @db.Decimal(15, 6)     // NULL for CATEGORY samples, required for NUMERIC
+  unit           String?                          // NULL for CATEGORY samples, required for NUMERIC
+
+  // CATEGORY samples: categoryCode present (NULL for NUMERIC samples)
+  categoryCode   String?  @map("category_code")   // e.g., "awake", "light", "deep", "rem"
+
+  // Time range
+  startAt        DateTime @map("start_at") @db.Timestamptz(6)  // Sample start time
+  endAt          DateTime @map("end_at") @db.Timestamptz(6)    // Sample end time (same as start for point-in-time)
+
+  // Interval duration (seconds) for INTERVAL_NUM metrics
+  durationSeconds Int?   @map("duration_seconds")
+
+  // Device + external identifiers (provenance)
+  deviceId       String? @map("device_id")
+  externalUuid   String? @map("external_uuid")
+
+  // Optional metadata (device info, accuracy, etc.)
+  metadata       Json?
+
+  // Timezone offset at recording time (minutes from UTC, -720..+840)
+  // Column already exists from migration 20260204000000 — this declaration
+  // fixes the schema drift so Prisma Client includes the field in types.
+  timezoneOffsetMin Int? @map("timezone_offset_min")
+
+  // Upload tracking
+  requestId      String?  @map("request_id")      // Idempotency key for the upload request
+  uploadedAt     DateTime @default(now()) @map("uploaded_at") @db.Timestamptz(6)
+
+  // Audit fields
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /// Whether this sample has been soft-deleted.
+  /// INVARIANT: Once true, should never be set back to false (monotonic).
+  /// When HealthKit/Health Connect reports deletion, set this instead of hard-deleting.
+  isDeleted      Boolean  @default(false) @map("is_deleted")
+
+  /// Timestamp when the sample was marked as deleted.
+  /// Null if not deleted. Used for audit trail and time-based cleanup.
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  // Relation
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Sample-level idempotency: one record per (user, source, sourceRecordId, startAt)
+  // NOTE: startAt included for TimescaleDB hypertable compatibility - unique indexes
+  // on hypertables MUST include all partition columns. The partition column is startAt.
+  @@unique([userId, sourceId, sourceRecordId, startAt], name: "health_sample_source_unique")
+
+  // Time-series queries: user + metric + time range (most common query pattern)
+  @@index([userId, metricCode, startAt(sort: Desc)])
+
+  // User-specific queries (all metrics)
+  @@index([userId, startAt(sort: Desc)])
+
+  // Request idempotency check
+  @@index([requestId])
+
+  // Metric-specific aggregation queries
+  @@index([metricCode, startAt(sort: Desc)])
+
+  // Category-specific queries (e.g., all "deep" sleep samples for a metric)
+  @@index([metricCode, categoryCode])
+
+  // Index for efficient non-deleted sample queries (most common pattern)
+  // Covers: SELECT * FROM health_samples WHERE user_id = ? AND is_deleted = false
+  @@index([userId, isDeleted])
+
+  // Index for cleanup operations (find old deleted samples for garbage collection)
+  @@index([deletedAt])
+
+  @@map("health_samples")
+}
+
+/// Tracks health sample upload requests for true request-level idempotency.
+///
+/// PURPOSE:
+/// - Detect duplicate requests before processing (fast lookup by requestId)
+/// - Cache responses for replay (return same response on retry)
+/// - Track partial success states (some samples succeed, others fail)
+/// - Detect payload tampering (same requestId with different payloadHash)
+///
+/// IDEMPOTENCY FLOW:
+/// 1. Client sends BatchUpsertSamplesRequest with unique requestId
+/// 2. Server checks HealthIngestRequest for existing requestId
+/// 3. If found with matching payloadHash: return cached response
+/// 4. If found with different payloadHash: reject as tampering
+/// 5. If not found: create entry with status='processing', process samples
+/// 6. On completion: update status and cache response
+///
+/// RETENTION: Old entries should be purged after 30 days (configurable)
+model HealthIngestRequest {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+
+  // Idempotency key (unique per request)
+  requestId     String   @map("request_id")
+
+  // Payload integrity verification
+  payloadHash   String   @map("payload_hash")
+
+  // Processing status
+  // Values: 'processing', 'completed', 'partial', 'failed'
+  status        String   @default("processing")
+
+  // Sample counts for tracking
+  sampleCount   Int      @map("sample_count")
+  successCount  Int      @default(0) @map("success_count")
+  failedCount   Int      @default(0) @map("failed_count")
+
+  // Cached response for replay (JSON serialized BatchUpsertSamplesResponse)
+  responseJson  Json?    @map("response_json")
+
+  // Timestamps
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  completedAt   DateTime? @map("completed_at") @db.Timestamptz(6)
+
+  // Relation
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Idempotency: one request per requestId per user
+  @@unique([userId, requestId], name: "health_ingest_request_unique")
+
+  // For recent requests lookup and cleanup
+  @@index([userId, createdAt(sort: Desc)])
+
+  // For cleanup operations (purge old entries)
+  @@index([createdAt])
+
+  @@map("health_ingest_requests")
+}
+
+/// Status of telemetry cache computation.
+enum SessionTelemetryCacheStatus {
+  PENDING     // Scheduled for computation
+  COMPUTING   // Currently being computed
+  READY       // Successfully computed, ready for queries
+  FAILED      // Computation failed (see errorMessage)
+  NO_DATA     // Computed but no health data exists for this session
+  STALE       // Version outdated, needs recomputation
+}
+
+/// Precomputed, downsampled health telemetry for session visualization.
+///
+/// PURPOSE:
+/// - Store precomputed, downsampled health data for fast visualization
+/// - Authoritative source for historical session telemetry after app reinstall
+/// - Reduces API latency and server load for repeat views
+///
+/// LIFECYCLE:
+/// 1. Session status changes to COMPLETED
+/// 2. Worker job triggers precomputation (async, within minutes)
+/// 3. Cache is populated with downsampled series
+/// 4. Client requests telemetry → served from cache
+/// 5. If recomputation logic changes, version is bumped and cache rebuilt
+///
+/// RETENTION: Same as session retention (indefinite for user data)
+///
+/// WINDOW: sessionStart - 60 minutes through sessionEnd + 60 minutes (UTC)
+///
+/// @see SESSIONHEALTHKITUI.md for complete implementation plan
+model SessionTelemetryCache {
+  id                    String                      @id @default(uuid())
+  sessionId             String                      @map("session_id")
+  userId                String                      @map("user_id")
+
+  // Time window configuration
+  windowMinutes         Int                         @default(60) @map("window_minutes")
+  resolution            String                      @default("1m") // '1m' | '5m' only
+
+  // Time window (Unix milliseconds)
+  windowStartMs         BigInt                      @map("window_start_ms")
+  windowEndMs           BigInt                      @map("window_end_ms")
+  sessionStartMs        BigInt                      @map("session_start_ms")
+  sessionEndMs          BigInt                      @map("session_end_ms")
+
+  // Precomputed data (JSON blob - efficient for read-heavy workload)
+  // Structure: { schemaVersion, metrics: { [metricCode]: MetricSeriesData }, ... }
+  metricsJson           Json                        @map("metrics_json")
+
+  // Computation metadata
+  schemaVersion         Int                         @default(1) @map("schema_version")
+  computeVersion        Int                         @default(1) @map("compute_version")
+  computedAt            DateTime                    @default(now()) @map("computed_at") @db.Timestamptz(6)
+  computationDurationMs Int?                        @map("computation_duration_ms")
+
+  // Source tracking (for debugging/auditing)
+  rawSampleCount        Int                         @map("raw_sample_count")
+
+  // Status tracking
+  status                SessionTelemetryCacheStatus @default(READY)
+  errorMessage          String?                     @map("error_message")
+
+  // P0-G.1: Watermark-based staleness tracking
+  /// Watermark value at the time of computation (for freshness detection)
+  /// Used to detect staleness: if user's current watermark > sourceWatermark, cache is stale
+  sourceWatermark       BigInt?                     @map("source_watermark")
+  /// Watermark when staleness was first detected (for monitoring/alerting)
+  staleSinceWatermark   BigInt?                     @map("stale_since_watermark")
+  /// Retry count since last successful computation (for exponential backoff)
+  attempts              Int                         @default(0) @map("attempts")
+  /// Reason why the cache is stale ('NEW_SAMPLES', 'DELETIONS', 'WATERMARK_MISMATCH', etc.)
+  staleReason           String?                     @map("stale_reason")
+
+  // Timestamps
+  createdAt             DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime                    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  session               Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user                  User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Composite cache key: (session_id, window_minutes, resolution, compute_version)
+  @@unique([sessionId, windowMinutes, resolution, computeVersion], name: "session_telemetry_cache_key")
+  @@index([userId])
+  @@index([userId, sessionStartMs])
+  @@index([userId, sourceWatermark], map: "session_telemetry_cache_user_watermark_idx")
+  @@index([status])
+  @@map("session_telemetry_cache")
+}
+
+/// Tracks per-projection completion status for health event fanout.
+/// Enables independent retry: completed projections skip on retry.
+///
+/// INVARIANTS:
+/// - (outboxEventId, projectionName) is unique
+/// - Status progression: PENDING → PROCESSING → COMPLETED | FAILED
+/// - COMPLETED checkpoints are immutable (never transition to another state)
+///
+/// @see health-projection-coordinator.service.ts
+model ProjectionCheckpoint {
+  id             String                     @id @default(dbgenerated("gen_random_uuid()"))
+  outboxEventId  String                     @map("outbox_event_id")
+  projectionName String                     @map("projection_name")
+  status         ProjectionCheckpointStatus @default(PENDING)
+  startedAt      DateTime?                  @map("started_at") @db.Timestamptz(6)
+  completedAt    DateTime?                  @map("completed_at") @db.Timestamptz(6)
+  error          String?
+  retryCount     Int                        @default(0) @map("retry_count")
+  /// GAP E FIX: Lease-based concurrency control.
+  /// When PROCESSING, this is the timestamp after which the lease is considered expired.
+  /// NULL means "no lease held" — existing rows without leases are treated as acquirable.
+  /// A handler MUST acquire the lease (leaseExpiresAt > NOW()) before processing.
+  leaseExpiresAt DateTime?                  @map("lease_expires_at") @db.Timestamptz(6)
+  createdAt      DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  outboxEvent    OutboxEvent                @relation(fields: [outboxEventId], references: [id], onDelete: Cascade)
+
+  @@unique([outboxEventId, projectionName], name: "projection_checkpoint_unique", map: "projection_checkpoint_unique")
+  @@index([projectionName, status], map: "projection_checkpoints_projection_name_status_idx")
+  @@index([status, createdAt], map: "projection_checkpoints_status_created_at_idx")
+  @@map("projection_checkpoints")
+}
+
+/// Tracks monotonic sequence number for user health data changes.
+/// Used for watermark-based staleness detection of derived data (caches).
+///
+/// INVARIANTS:
+/// - sequenceNumber is monotonically increasing (never decremented)
+/// - sequenceNumber >= 0 (enforced by CHECK constraint in DB)
+/// - One row per user (userId is primary key)
+///
+/// STALENESS DETECTION:
+/// - When health samples are ingested, watermark.sequenceNumber is incremented
+/// - When cache is computed, cache.sourceWatermark = watermark.sequenceNumber
+/// - If watermark.sequenceNumber > cache.sourceWatermark, cache is stale
+///
+/// @see 20260204000000_add_health_projection_infrastructure migration
+model UserHealthWatermark {
+  userId         String    @id @map("user_id")
+  sequenceNumber BigInt    @default(0) @map("sequence_number")
+  lastSampleAt   DateTime? @map("last_sample_at") @db.Timestamptz(6)
+  lastChangedAt  DateTime  @default(now()) @map("last_changed_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_health_watermarks")
+}
+
+enum ProjectionCheckpointStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+/// Pre-computed daily rollup for a single health metric.
+///
+/// One row per (userId, metricCode, dayUtc). Updated synchronously when
+/// health.samples.changed events are processed by HealthRollupProjectionHandler.
+///
+/// VALUE KIND SEMANTICS (determines which aggregation fields are meaningful):
+///   SCALAR_NUM  → avgValue=avg, minVal, maxVal, countVal, sumSq (for variance)
+///   CUMULATIVE_NUM → sumVal=delta(max-min), countVal
+///   INTERVAL_NUM   → sumVal=sum, minVal, maxVal, countVal
+///   CATEGORY → NOT stored here (use sleep_night_summary or category-specific tables)
+///
+/// STATUS LIFECYCLE: PENDING → READY | NO_DATA | FAILED
+///   STALE is set when new samples arrive for a previously-computed day.
+///
+/// IDEMPOTENCY: Upsert on (userId, metricCode, dayUtc) — safe under at-least-once delivery.
+///
+/// @see health-projection-coordinator.service.ts HealthRollupProjectionHandler
+model UserHealthRollupDay {
+  id               String    @id @default(dbgenerated("gen_random_uuid()"))
+  userId           String    @map("user_id")
+  metricCode       String    @map("metric_code")
+  dayUtc           DateTime  @map("day_utc") @db.Date
+
+  /// Discriminator: SCALAR_NUM | CUMULATIVE_NUM | INTERVAL_NUM
+  valueKind        String    @map("value_kind")
+
+  /// Sum of all sample values (NULL for SCALAR_NUM — meaningless for point-in-time metrics)
+  sumVal           Decimal?  @map("sum_val") @db.Decimal(15, 6)
+  /// Number of samples aggregated
+  countVal         Int       @default(0) @map("count_val")
+  /// Minimum sample value
+  minVal           Decimal?  @map("min_val") @db.Decimal(15, 6)
+  /// Maximum sample value
+  maxVal           Decimal?  @map("max_val") @db.Decimal(15, 6)
+  /// Sum of squared values (for variance computation, SCALAR_NUM only)
+  sumSq            Decimal?  @map("sum_sq") @db.Decimal(20, 6)
+
+  /// Dominant timezone offset (in minutes) of samples aggregated into this day.
+  /// Nullable for backward compat (existing rows) and UTC-only measurements.
+  /// Enables local-day reconstruction and DST/travel audit without re-querying samples.
+  timezoneOffsetMin Int?     @map("timezone_offset_min")
+
+  /// Computation status: PENDING | COMPUTING | READY | FAILED | NO_DATA | STALE
+  status           String    @default("PENDING") @map("status")
+  /// UserHealthWatermark.sequenceNumber at compute time (staleness detection)
+  sourceWatermark  BigInt?   @map("source_watermark")
+  /// Schema version for forward-compatible rollup format changes
+  computeVersion   Int       @default(1) @map("compute_version")
+  /// Timestamp of last successful computation
+  computedAt       DateTime  @default(now()) @map("computed_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, metricCode, dayUtc], name: "user_health_rollup_day_unique")
+  @@index([userId, metricCode, dayUtc(sort: Desc)], map: "user_health_rollup_day_lookup_idx")
+  @@map("user_health_rollup_day")
+}
+
+/// Pre-computed sleep night summary — one row per user per "night of" date.
+///
+/// Aggregates all sleep stage samples for a single night into a denormalized
+/// read model optimized for Sleep UI card rendering (no joins needed).
+///
+/// NIGHT ANCHORING: Uses getSleepNightAnchorDate() logic:
+///   Sleep starting 6pm-midnight → anchored to that date
+///   Sleep starting midnight-6am → anchored to PREVIOUS date
+///
+/// SOURCE DEDUP: When multiple devices report sleep data for the same night,
+/// selectCanonicalSource() picks the highest-priority source with sufficient coverage.
+///
+/// STAGE AVAILABILITY: Fields like remMin, deepMin are NULL (not 0) when the
+/// device does not report that stage. This distinguishes "0 minutes of deep sleep"
+/// from "deep sleep data unavailable".
+///
+/// @see health-projection-coordinator.service.ts SleepSummaryProjectionHandler
+model UserSleepNightSummary {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()"))
+  userId             String    @map("user_id")
+  /// The "night of" anchor date in user's local time (YYYY-MM-DD)
+  nightLocalDate     DateTime  @map("night_local_date") @db.Date
+  /// Timezone offset used for night anchoring (minutes from UTC)
+  timezoneOffsetMin  Int       @map("timezone_offset_min")
+
+  // Core sleep timestamps (UTC)
+  sleepStartTs       DateTime? @map("sleep_start_ts") @db.Timestamptz(6)
+  sleepEndTs         DateTime? @map("sleep_end_ts") @db.Timestamptz(6)
+  inBedStartTs       DateTime? @map("in_bed_start_ts") @db.Timestamptz(6)
+  inBedEndTs         DateTime? @map("in_bed_end_ts") @db.Timestamptz(6)
+
+  // Duration breakdowns (minutes) — NULL means data unavailable from device
+  totalSleepMin      Int?      @map("total_sleep_min")
+  inBedMin           Int?      @map("in_bed_min")
+  awakeMin           Int?      @map("awake_min")
+  remMin             Int?      @map("rem_min")
+  deepMin            Int?      @map("deep_min")
+  lightMin           Int?      @map("light_min")
+
+  // Derived metrics
+  sleepEfficiency    Decimal?  @map("sleep_efficiency") @db.Decimal(5, 2)
+  wakeEvents         Int?      @map("wake_events")
+  sleepLatencyMin    Int?      @map("sleep_latency_min")
+
+  // Pre-bed session correlation
+  hadSessionBefore   Boolean   @default(false) @map("had_session_before")
+  sessionIdBefore    String?   @map("session_id_before")
+  hoursBeforeBed     Decimal?  @map("hours_before_bed") @db.Decimal(4, 1)
+
+  // Stage availability flags (NULL vs 0 disambiguation)
+  hasRemData         Boolean   @default(false) @map("has_rem_data")
+  hasDeepData        Boolean   @default(false) @map("has_deep_data")
+  hasLightData       Boolean   @default(false) @map("has_light_data")
+  hasAwakeData       Boolean   @default(false) @map("has_awake_data")
+
+  // Source dedup metadata
+  canonicalSourceId  String?   @map("canonical_source_id")
+  sourceCount        Int       @default(1) @map("source_count")
+  sourceCoverage     Decimal?  @map("source_coverage") @db.Decimal(3, 2)
+  dataQualityScore   Decimal?  @map("data_quality_score") @db.Decimal(3, 2)
+
+  // Computation metadata
+  status             String    @default("PENDING") @map("status")
+  sourceWatermark    BigInt?   @map("source_watermark")
+  computeVersion     Int       @default(1) @map("compute_version")
+  computedAt         DateTime  @default(now()) @map("computed_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionBefore      Session? @relation(fields: [sessionIdBefore], references: [id], onDelete: SetNull)
+
+  @@unique([userId, nightLocalDate], name: "user_sleep_night_summary_unique")
+  @@index([userId, nightLocalDate(sort: Desc)], map: "user_sleep_night_summary_lookup_idx")
+  @@map("user_sleep_night_summary")
+}
+
+/// Pre-computed session health impact summary.
+///
+/// Captures before/during/after deltas for a health metric around a
+/// session. One row per (sessionId, metricCode, windowMinutes, resolution).
+///
+/// Used by Session Detail → Health Impact cards for instant rendering
+/// without re-querying raw samples.
+///
+/// BUCKETING:
+///   before = [sessionStart - windowMinutes, sessionStart)
+///   during = [sessionStart, sessionEnd]
+///   after  = (sessionEnd, sessionEnd + windowMinutes]
+///
+/// RELIABILITY: isReliable=false when coverage in any bucket < 0.6.
+/// This prevents misleading delta computations from sparse data.
+///
+/// @see health-projection-coordinator.service.ts SessionImpactProjectionHandler
+model UserSessionImpactSummary {
+  id               String    @id @default(dbgenerated("gen_random_uuid()"))
+  sessionId        String    @map("session_id")
+  userId           String    @map("user_id")
+  metricCode       String    @map("metric_code")
+  windowMinutes    Int       @default(60) @map("window_minutes")
+  resolution       String    @default("1min") @map("resolution")
+
+  // Before-session bucket
+  avgBefore        Decimal?  @map("avg_before") @db.Decimal(15, 6)
+  minBefore        Decimal?  @map("min_before") @db.Decimal(15, 6)
+  maxBefore        Decimal?  @map("max_before") @db.Decimal(15, 6)
+  countBefore      Int       @default(0) @map("count_before")
+
+  // During-session bucket
+  avgDuring        Decimal?  @map("avg_during") @db.Decimal(15, 6)
+  minDuring        Decimal?  @map("min_during") @db.Decimal(15, 6)
+  maxDuring        Decimal?  @map("max_during") @db.Decimal(15, 6)
+  countDuring      Int       @default(0) @map("count_during")
+
+  // After-session bucket
+  avgAfter         Decimal?  @map("avg_after") @db.Decimal(15, 6)
+  minAfter         Decimal?  @map("min_after") @db.Decimal(15, 6)
+  maxAfter         Decimal?  @map("max_after") @db.Decimal(15, 6)
+  countAfter       Int       @default(0) @map("count_after")
+
+  // Computed deltas
+  deltaDuringAbs   Decimal?  @map("delta_during_abs") @db.Decimal(15, 6)
+  deltaDuringPct   Decimal?  @map("delta_during_pct") @db.Decimal(15, 6)
+  deltaAfterAbs    Decimal?  @map("delta_after_abs") @db.Decimal(15, 6)
+  deltaAfterPct    Decimal?  @map("delta_after_pct") @db.Decimal(15, 6)
+
+  // Coverage metrics (ratio of expected vs actual data points)
+  beforeCoverage   Decimal?  @map("before_coverage") @db.Decimal(3, 2)
+  duringCoverage   Decimal?  @map("during_coverage") @db.Decimal(3, 2)
+  afterCoverage    Decimal?  @map("after_coverage") @db.Decimal(3, 2)
+
+  // Data quality flags
+  hasSignificantGaps Boolean @default(false) @map("has_significant_gaps")
+  isReliable         Boolean @default(true) @map("is_reliable")
+
+  // Computation metadata
+  status             String  @default("PENDING") @map("status")
+  sourceWatermark    BigInt? @map("source_watermark")
+  computeVersion     Int     @default(1) @map("compute_version")
+  computedAt         DateTime @default(now()) @map("computed_at") @db.Timestamptz(6)
+
+  // Relations
+  session            Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, metricCode, windowMinutes, resolution], name: "user_session_impact_summary_unique")
+  @@index([userId, sessionId], map: "user_session_impact_summary_user_session_idx")
+  @@map("user_session_impact_summary")
+}
+
+/// Aggregated per-product health impact rollups.
+/// Computed write-time by ProductImpactProjectionHandler from session-level impacts.
+/// Natural key: (userId, productId, metricCode, windowMinutes, resolution).
+model UserProductImpactRollup {
+  id               String    @id @default(dbgenerated("gen_random_uuid()"))
+  userId           String    @map("user_id")
+  productId        String    @map("product_id")
+  metricCode       String    @map("metric_code")
+  windowMinutes    Int       @default(60) @map("window_minutes")
+  resolution       String    @default("1min") @map("resolution")
+
+  // Period dimension for lookback window variants (7d, 30d, 90d).
+  // Enables same (user, product, metric) to have 7d, 30d, 90d rollups separately.
+  // Default 90 preserves backward compatibility with existing all-time rollups.
+  periodDays       Int       @default(90) @map("period_days")
+
+  // Aggregation period (derived from contributing sessions within periodDays window)
+  periodStart      DateTime? @map("period_start") @db.Timestamptz(6)
+  periodEnd        DateTime? @map("period_end") @db.Timestamptz(6)
+  sessionCount     Int       @default(0) @map("session_count")
+  minSessionsRequired Int    @default(3) @map("min_sessions_required")
+
+  // Aggregated effects (mean/median across all sessions for this product×metric)
+  avgDeltaDuringAbs  Decimal? @map("avg_delta_during_abs") @db.Decimal(15, 6)
+  avgDeltaDuringPct  Decimal? @map("avg_delta_during_pct") @db.Decimal(15, 6)
+  avgDeltaAfterAbs   Decimal? @map("avg_delta_after_abs") @db.Decimal(15, 6)
+  avgDeltaAfterPct   Decimal? @map("avg_delta_after_pct") @db.Decimal(15, 6)
+  medianDeltaAfterPct Decimal? @map("median_delta_after_pct") @db.Decimal(15, 6)
+
+  // Baseline reference (mean of before-session averages)
+  baselineValue    Decimal?  @map("baseline_value") @db.Decimal(15, 6)
+  baselineMethod   String?   @map("baseline_method")
+  baselineN        Int?      @map("baseline_n")
+  baselineWindow   String?   @map("baseline_window")
+
+  // Quality assessment
+  coverageScore    Decimal?  @map("coverage_score") @db.Decimal(5, 4)
+  isReliable       Boolean   @default(false) @map("is_reliable")
+  qualityFlags     Json?     @map("quality_flags") @db.JsonB
+  exactness        String    @default("ESTIMATED") @map("exactness")
+
+  // Confidence metrics
+  confidenceTier   String    @default("INSUFFICIENT") @map("confidence_tier")
+  confidenceScore  Decimal?  @map("confidence_score") @db.Decimal(5, 4)
+  ciLow            Decimal?  @map("ci_low") @db.Decimal(15, 6)
+  ciHigh           Decimal?  @map("ci_high") @db.Decimal(15, 6)
+
+  // Freshness / computation metadata
+  status           String    @default("PENDING") @map("status")
+  sourceWatermark  BigInt?   @map("source_watermark")
+  computeVersion   Int       @default(1) @map("compute_version")
+  computedAt       DateTime  @default(now()) @map("computed_at") @db.Timestamptz(6)
+
+  // Traceability (sampled evidence)
+  evidenceSessionCount Int   @default(0) @map("evidence_session_count")
+  evidenceSessionIds   Json? @map("evidence_session_ids") @db.JsonB
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId, metricCode, windowMinutes, resolution, periodDays], name: "user_product_impact_rollup_unique")
+  @@index([userId, metricCode], map: "user_product_impact_rollup_user_metric_idx")
+  @@index([userId, productId], map: "user_product_impact_rollup_user_product_idx")
+  @@map("user_product_impact_rollup")
+}

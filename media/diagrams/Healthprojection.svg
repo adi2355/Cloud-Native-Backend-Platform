@@ -1,0 +1,334 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1680" height="1160" viewBox="0 0 1680 1160" role="img" aria-labelledby="title desc">
+  <title id="title">Backend Health Projection Pipeline</title>
+  <desc id="desc">Accurate representation of the backend projection pipeline, showing the atomic write path, ordered async worker handlers, and freshness-aware read services.</desc>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0B1220"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    
+    <!-- Lane Background Gradients -->
+    <linearGradient id="writeGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(17, 94, 89, 0.15)"/>
+      <stop offset="100%" stop-color="rgba(17, 94, 89, 0.05)"/>
+    </linearGradient>
+    <linearGradient id="workerGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(76, 29, 149, 0.15)"/>
+      <stop offset="100%" stop-color="rgba(76, 29, 149, 0.05)"/>
+    </linearGradient>
+    <linearGradient id="readGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(30, 58, 138, 0.15)"/>
+      <stop offset="100%" stop-color="rgba(30, 58, 138, 0.05)"/>
+    </linearGradient>
+    <linearGradient id="commitGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#064E3B"/>
+      <stop offset="100%" stop-color="#022C22"/>
+    </linearGradient>
+
+    <!-- Markers -->
+    <marker id="arrowData" markerWidth="14" markerHeight="14" refX="11" refY="7" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L11,7 L0,13 Z" fill="#38BDF8"/>
+    </marker>
+    <marker id="arrowControl" markerWidth="14" markerHeight="14" refX="11" refY="7" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L11,7 L0,13 Z" fill="#F59E0B"/>
+    </marker>
+    <marker id="arrowContext" markerWidth="14" markerHeight="14" refX="11" refY="7" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L11,7 L0,13 Z" fill="#F43F5E"/>
+    </marker>
+    <marker id="arrowDep" markerWidth="14" markerHeight="14" refX="11" refY="7" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L11,7 L0,13 Z" fill="#F59E0B"/>
+    </marker>
+    
+    <!-- Filters -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+    <filter id="glowGreen" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="#10B981" flood-opacity="0.3"/>
+    </filter>
+    
+    <!-- Text Styles -->
+    <style>
+      .title { font: 700 28px Inter, -apple-system, sans-serif; fill: #F8FAFC; }
+      .subtitle { font: 400 15px Inter, -apple-system, sans-serif; fill: #94A3B8; }
+      .colHeader { font: 700 18px Inter, -apple-system, sans-serif; fill: #E2E8F0; }
+      .cardTitle { font: 700 14px Inter, -apple-system, sans-serif; fill: #F8FAFC; }
+      .cardMeta { font: 400 12px Inter, -apple-system, sans-serif; fill: #CBD5E1; }
+      .codeLabel { font: 600 12px "JetBrains Mono", monospace; fill: #38BDF8; }
+      .badge { font: 700 11px Inter, -apple-system, sans-serif; fill: #FFFFFF; text-transform: uppercase; letter-spacing: 0.05em; }
+      .legendTitle { font: 700 14px Inter, -apple-system, sans-serif; fill: #E2E8F0; }
+      .legendText { font: 500 12px Inter, -apple-system, sans-serif; fill: #94A3B8; }
+      .pathLabel { font: 600 12px Inter, -apple-system, sans-serif; fill: #F43F5E; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1680" height="1160" rx="24" fill="url(#bg)"/>
+  <rect x="32" y="32" width="1616" height="1096" rx="20" fill="none" stroke="#1E293B"/>
+
+  <!-- Titles -->
+  <text x="64" y="80" class="title">Backend Health Projection Pipeline</text>
+  <text x="64" y="106" class="subtitle">Atomic write constraints, sequential async orchestration, outbox coalescing, and watermark-aware serving.</text>
+
+  <!-- Legend -->
+  <rect x="1336" y="46" width="312" height="110" rx="12" fill="rgba(15, 23, 42, 0.8)" stroke="#334155"/>
+  <text x="1356" y="70" class="legendTitle">Flow Reference Guide</text>
+  
+  <path d="M 1356 90 L 1396 90" stroke="#F59E0B" stroke-width="4" fill="none" marker-end="url(#arrowControl)"/>
+  <text x="1411" y="94" class="legendText">Control Flow / Orchestration</text>
+  
+  <path d="M 1356 115 L 1396 115" stroke="#38BDF8" stroke-width="2" fill="none" marker-end="url(#arrowData)"/>
+  <text x="1411" y="119" class="legendText">Data Read / Upsert</text>
+  
+  <path d="M 1356 140 L 1396 140" stroke="#F43F5E" stroke-width="2" stroke-dasharray="4,4" fill="none" marker-end="url(#arrowContext)"/>
+  <text x="1411" y="144" class="legendText">Freshness / Staleness Check</text>
+
+  <!-- ========================================== -->
+  <!-- COLUMNS & BACKGROUNDS                      -->
+  <!-- ========================================== -->
+  
+  <!-- Col 1: Write Path -->
+  <rect x="64" y="180" width="340" height="920" rx="16" fill="url(#writeGrad)" stroke="#0F766E"/>
+  <text x="84" y="216" class="colHeader">1. Transactional Write Path</text>
+  <text x="84" y="236" class="cardMeta">Mutates operational source of truth</text>
+
+  <!-- Col 2: Async Worker -->
+  <rect x="424" y="180" width="760" height="920" rx="16" fill="url(#workerGrad)" stroke="#7C3AED"/>
+  <text x="444" y="216" class="colHeader">2. Async Projection Pipeline (Worker)</text>
+  <text x="444" y="236" class="cardMeta">Transforms raw events into optimized read models</text>
+
+  <!-- Col 3: Read Path -->
+  <rect x="1204" y="180" width="412" height="920" rx="16" fill="url(#readGrad)" stroke="#1D4ED8"/>
+  <text x="1224" y="216" class="colHeader">3. Read &amp; Serving Layer</text>
+  <text x="1224" y="236" class="cardMeta">Exposes data with verified freshness state</text>
+
+
+  <!-- ========================================== -->
+  <!-- COLUMN 1: WRITE PATH                       -->
+  <!-- ========================================== -->
+
+  <g filter="url(#shadow)">
+    <rect x="84" y="260" width="300" height="80" rx="12" fill="#0F172A" stroke="#10B981"/>
+  </g>
+  <rect x="94" y="270" width="4" height="60" rx="2" fill="#10B981"/>
+  <text x="108" y="284" class="cardTitle">HealthSampleService</text>
+  <text x="108" y="304" class="cardMeta">Validation, normalization,</text>
+  <text x="108" y="324" class="cardMeta">and privacy gating (PHI).</text>
+
+  <!-- Atomic Transaction Block -->
+  <g filter="url(#glowGreen)">
+    <rect x="84" y="380" width="300" height="250" rx="16" fill="url(#commitGrad)" stroke="#10B981" stroke-width="3"/>
+  </g>
+  <text x="104" y="415" class="cardTitle" fill="#34D399">Atomic PostgreSQL Transaction</text>
+  <text x="104" y="435" class="cardMeta" fill="#A7F3D0">Ensures zero dual-writes</text>
+
+  <!-- health_samples -->
+  <rect x="104" y="450" width="260" height="46" rx="8" fill="#022C22" stroke="#059669"/>
+  <text x="118" y="470" class="codeLabel">health_samples</text>
+  <text x="118" y="486" class="cardMeta" fill="#6EE7B7">Idempotent UPSERT of raw data</text>
+
+  <!-- user_health_watermarks -->
+  <rect x="104" y="510" width="260" height="46" rx="8" fill="#022C22" stroke="#059669"/>
+  <text x="118" y="530" class="codeLabel">user_health_watermarks</text>
+  <text x="118" y="546" class="cardMeta" fill="#6EE7B7">Increments sequence (minRequiredSeq)</text>
+
+  <!-- outbox_events -->
+  <rect x="104" y="570" width="260" height="46" rx="8" fill="#022C22" stroke="#059669"/>
+  <text x="118" y="590" class="codeLabel">outbox_events</text>
+  <text x="118" y="606" class="cardMeta" fill="#6EE7B7">Appends health.samples.changed</text>
+
+
+  <!-- ========================================== -->
+  <!-- COLUMN 2: ASYNC PIPELINE                   -->
+  <!-- ========================================== -->
+
+  <!-- OutboxProcessorService -->
+  <g filter="url(#shadow)">
+    <rect x="444" y="260" width="720" height="80" rx="12" fill="#2E1065" stroke="#A855F7"/>
+  </g>
+  <rect x="454" y="270" width="4" height="60" rx="2" fill="#D8B4FE"/>
+  <text x="468" y="284" class="cardTitle">OutboxProcessorService</text>
+  <text x="468" y="304" class="cardMeta">Polls PENDING events. Critically: coalesces multiple health.samples.changed events per user</text>
+  <text x="468" y="324" class="cardMeta">into a single unified payload to optimize downstream processing and DB load.</text>
+
+  <!-- Coordinator -->
+  <g filter="url(#shadow)">
+    <rect x="444" y="380" width="380" height="70" rx="12" fill="#4C1D95" stroke="#8B5CF6"/>
+  </g>
+  <rect x="454" y="390" width="4" height="50" rx="2" fill="#A78BFA"/>
+  <text x="468" y="404" class="cardTitle">HealthProjectionCoordinatorService</text>
+  <text x="468" y="424" class="cardMeta">Orchestrates execution of handlers with strict</text>
+  <text x="468" y="440" class="cardMeta">dependency ordering &amp; lease-based locks.</text>
+
+  <!-- Checkpoints -->
+  <g filter="url(#shadow)">
+    <rect x="844" y="380" width="320" height="70" rx="12" fill="#0F172A" stroke="#475569"/>
+  </g>
+  <rect x="854" y="390" width="4" height="50" rx="2" fill="#94A3B8"/>
+  <text x="868" y="404" class="codeLabel">projection_checkpoints</text>
+  <text x="868" y="424" class="cardMeta">Tracks PENDING / PROCESSING / FAILED /</text>
+  <text x="868" y="440" class="cardMeta">COMPLETED state per handler per event.</text>
+
+  <!-- Ordered Handlers Container -->
+  <rect x="444" y="480" width="380" height="530" rx="16" fill="rgba(15, 23, 42, 0.4)" stroke="#A855F7" stroke-dasharray="6,4"/>
+  <text x="464" y="510" class="colHeader" fill="#D8B4FE">Ordered Handler Execution</text>
+  <text x="464" y="530" class="cardMeta" fill="#C4B5FD">Synchronous &amp; sequential dispatch.</text>
+
+  <!-- Handlers -->
+  <g filter="url(#shadow)">
+    <rect x="464" y="550" width="340" height="60" rx="10" fill="#0F172A" stroke="#6D28D9"/>
+    <text x="484" y="574" class="cardTitle">HealthRollupProjectionHandler</text>
+    <text x="484" y="594" class="cardMeta">Aggregates numeric daily totals/averages</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="464" y="640" width="340" height="60" rx="10" fill="#0F172A" stroke="#6D28D9"/>
+    <text x="484" y="664" class="cardTitle">SleepSummaryProjectionHandler</text>
+    <text x="484" y="684" class="cardMeta">Clusters stages, maps pre-bed sessions</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="464" y="730" width="340" height="60" rx="10" fill="#0F172A" stroke="#6D28D9"/>
+    <text x="484" y="754" class="cardTitle">SessionImpactProjectionHandler</text>
+    <text x="484" y="774" class="cardMeta">Computes before/during/after metric deltas</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="464" y="840" width="340" height="60" rx="10" fill="#0F172A" stroke="#6D28D9"/>
+    <text x="484" y="864" class="cardTitle">ProductImpactProjectionHandler</text>
+    <text x="484" y="884" class="cardMeta">Aggregates session impacts per-product</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="464" y="930" width="340" height="60" rx="10" fill="#0F172A" stroke="#6D28D9"/>
+    <text x="484" y="954" class="cardTitle">TelemetryCacheProjectionHandler</text>
+    <text x="484" y="974" class="cardMeta">Invalidates pre-computed telemetry arrays</text>
+  </g>
+
+  <!-- Projection Tables (Read Models) -->
+  <g filter="url(#shadow)"><rect x="864" y="550" width="300" height="60" rx="10" fill="#0F172A" stroke="#3B82F6"/></g>
+  <rect x="874" y="560" width="4" height="40" rx="2" fill="#38BDF8"/>
+  <text x="888" y="574" class="codeLabel">user_health_rollup_day</text>
+  <text x="888" y="594" class="cardMeta">Idempotent UPSERT + tags sourceWatermark</text>
+
+  <g filter="url(#shadow)"><rect x="864" y="640" width="300" height="60" rx="10" fill="#0F172A" stroke="#3B82F6"/></g>
+  <rect x="874" y="650" width="4" height="40" rx="2" fill="#38BDF8"/>
+  <text x="888" y="664" class="codeLabel">user_sleep_night_summary</text>
+  <text x="888" y="684" class="cardMeta">Idempotent UPSERT + tags sourceWatermark</text>
+
+  <g filter="url(#shadow)"><rect x="864" y="730" width="300" height="60" rx="10" fill="#0F172A" stroke="#3B82F6"/></g>
+  <rect x="874" y="740" width="4" height="40" rx="2" fill="#38BDF8"/>
+  <text x="888" y="754" class="codeLabel">user_session_impact_summary</text>
+  <text x="888" y="774" class="cardMeta">Idempotent UPSERT + tags sourceWatermark</text>
+
+  <g filter="url(#shadow)"><rect x="864" y="840" width="300" height="60" rx="10" fill="#0F172A" stroke="#3B82F6"/></g>
+  <rect x="874" y="850" width="4" height="40" rx="2" fill="#38BDF8"/>
+  <text x="888" y="864" class="codeLabel">user_product_impact_rollup</text>
+  <text x="888" y="884" class="cardMeta">Idempotent UPSERT + tags sourceWatermark</text>
+
+  <g filter="url(#shadow)"><rect x="864" y="930" width="300" height="60" rx="10" fill="#0F172A" stroke="#3B82F6"/></g>
+  <rect x="874" y="940" width="4" height="40" rx="2" fill="#38BDF8"/>
+  <text x="888" y="954" class="codeLabel">session_telemetry_cache</text>
+  <text x="888" y="974" class="cardMeta">UPDATE status = 'STALE'</text>
+
+
+  <!-- ========================================== -->
+  <!-- COLUMN 3: READ PATH & APIs                 -->
+  <!-- ========================================== -->
+
+  <g filter="url(#shadow)">
+    <rect x="1224" y="550" width="372" height="230" rx="12" fill="#1E3A8A" stroke="#3B82F6"/>
+  </g>
+  <rect x="1234" y="560" width="4" height="210" rx="2" fill="#93C5FD"/>
+  <text x="1248" y="580" class="cardTitle">HealthProjectionReadService</text>
+  <text x="1248" y="605" class="cardMeta">Primary read interface for health data.</text>
+  <text x="1248" y="625" class="cardMeta">Fetches read models and executes dynamic</text>
+  <text x="1248" y="645" class="cardMeta" fill="#FCA5A5">Watermark Freshness Override:</text>
+  <rect x="1248" y="660" width="320" height="100" rx="6" fill="#0F172A" stroke="#475569"/>
+  <text x="1260" y="685" class="codeLabel" fill="#CBD5E1">if (currentSeq > row.sourceWatermark) {</text>
+  <text x="1280" y="705" class="codeLabel" fill="#F87171">  row.freshness.status = 'STALE';</text>
+  <text x="1260" y="725" class="codeLabel" fill="#CBD5E1">} else {</text>
+  <text x="1280" y="745" class="codeLabel" fill="#2DD4BF">  row.freshness.status = 'READY';</text>
+
+  <g filter="url(#shadow)">
+    <rect x="1224" y="820" width="372" height="70" rx="12" fill="#0F172A" stroke="#64748B"/>
+  </g>
+  <rect x="1234" y="830" width="4" height="50" rx="2" fill="#3B82F6"/>
+  <text x="1248" y="844" class="cardTitle">HealthInsightEngineService</text>
+  <text x="1248" y="864" class="cardMeta">Read-time deterministic rule engine. Synthesizes</text>
+  <text x="1248" y="880" class="cardMeta">rollups/impacts into actionable insights.</text>
+
+  <g filter="url(#shadow)">
+    <rect x="1224" y="920" width="372" height="70" rx="12" fill="#0F172A" stroke="#64748B"/>
+  </g>
+  <rect x="1234" y="930" width="4" height="50" rx="2" fill="#3B82F6"/>
+  <text x="1248" y="944" class="cardTitle">SessionTelemetryService</text>
+  <text x="1248" y="964" class="cardMeta">Returns cache instantly. Triggers async BullMQ</text>
+  <text x="1248" y="980" class="cardMeta">re-computation queue if status is STALE.</text>
+
+  <g filter="url(#shadow)">
+    <rect x="1224" y="1030" width="372" height="60" rx="12" fill="#022C22" stroke="#10B981"/>
+  </g>
+  <rect x="1234" y="1040" width="4" height="40" rx="2" fill="#10B981"/>
+  <text x="1248" y="1054" class="cardTitle">Health API Controllers</text>
+  <text x="1248" y="1074" class="cardMeta">/health/rollups, /health/sleep, /health/insights...</text>
+
+
+  <!-- ========================================== -->
+  <!-- ROUTING ARROWS                             -->
+  <!-- ========================================== -->
+
+  <!-- Write to Atomic Commit -->
+  <path d="M 234 340 L 234 380" stroke="#F59E0B" stroke-width="4" fill="none" marker-end="url(#arrowControl)"/>
+
+  <!-- Outbox to Worker -->
+  <path d="M 364 593 L 414 593 L 414 300 L 444 300" stroke="#F59E0B" stroke-width="4" fill="none" marker-end="url(#arrowControl)"/>
+
+  <!-- Worker Coalesce to Coordinator -->
+  <path d="M 804 340 L 804 360 L 634 360 L 634 380" stroke="#F59E0B" stroke-width="4" fill="none" marker-end="url(#arrowControl)"/>
+
+  <!-- Coordinator to Checkpoints -->
+  <path d="M 824 415 L 844 415" stroke="#94A3B8" stroke-width="2" stroke-dasharray="4,4" fill="none"/>
+  <path d="M 844 415 L 824 415" stroke="#94A3B8" stroke-width="2" stroke-dasharray="4,4" fill="none"/>
+
+  <!-- Coordinator to Handlers -->
+  <path d="M 634 450 L 634 550" stroke="#F59E0B" stroke-width="4" fill="none" marker-end="url(#arrowControl)"/>
+
+  <!-- Handler Dependency Arrow (SessionImpact to ProductImpact) -->
+  <path d="M 634 790 L 634 840" stroke="#F59E0B" stroke-width="3" stroke-dasharray="6,4" fill="none" marker-end="url(#arrowDep)"/>
+  <rect x="644" y="805" width="130" height="20" rx="4" fill="#450A0A" stroke="#EF4444"/>
+  <text x="709" y="819" text-anchor="middle" class="codeLabel" fill="#FCA5A5">dependsOn: session</text>
+
+  <!-- Handler Output Arrows -->
+  <path d="M 804 580 L 864 580" stroke="#38BDF8" stroke-width="2" fill="none" marker-end="url(#arrowData)"/>
+  <path d="M 804 670 L 864 670" stroke="#38BDF8" stroke-width="2" fill="none" marker-end="url(#arrowData)"/>
+  <path d="M 804 760 L 864 760" stroke="#38BDF8" stroke-width="2" fill="none" marker-end="url(#arrowData)"/>
+  <path d="M 804 870 L 864 870" stroke="#38BDF8" stroke-width="2" fill="none" marker-end="url(#arrowData)"/>
+  <path d="M 804 960 L 864 960" stroke="#38BDF8" stroke-width="2" fill="none" marker-end="url(#arrowData)"/>
+
+  <!-- Table to Read Service Arrows -->
+  <path d="M 1164 580 L 1224 580" stroke="#38BDF8" stroke-width="2" fill="none" marker-end="url(#arrowData)"/>
+  <path d="M 1164 670 L 1224 670" stroke="#38BDF8" stroke-width="2" fill="none" marker-end="url(#arrowData)"/>
+  <path d="M 1164 760 L 1224 760" stroke="#38BDF8" stroke-width="2" fill="none" marker-end="url(#arrowData)"/>
+
+  <path d="M 1164 870 L 1184 870 L 1184 770 L 1224 770" stroke="#38BDF8" stroke-width="2" fill="none" marker-end="url(#arrowData)"/>
+  <path d="M 1164 960 L 1224 960" stroke="#38BDF8" stroke-width="2" fill="none" marker-end="url(#arrowData)"/>
+
+  <!-- Read Service to Engine/API -->
+  <path d="M 1410 780 L 1410 820" stroke="#38BDF8" stroke-width="2" fill="none" marker-end="url(#arrowData)"/>
+  <path d="M 1596 720 L 1612 720 L 1612 1060 L 1596 1060" stroke="#38BDF8" stroke-width="2" fill="none" marker-end="url(#arrowData)"/>
+  <path d="M 1596 855 L 1604 855 L 1604 1050 L 1596 1050" stroke="#38BDF8" stroke-width="2" fill="none" marker-end="url(#arrowData)"/>
+  <path d="M 1500 990 L 1500 1030" stroke="#38BDF8" stroke-width="2" fill="none" marker-end="url(#arrowData)"/>
+
+
+  <!-- ========================================== -->
+  <!-- WATERMARK STALENESS ROUTING                -->
+  <!-- ========================================== -->
+  
+  <path d="M 364 533 L 1214 533 L 1214 650 L 1224 650" stroke="#F43F5E" stroke-width="2" stroke-dasharray="6,4" fill="none" marker-end="url(#arrowContext)"/>
+  <rect x="700" y="521" width="220" height="24" rx="12" fill="#4C1D95" stroke="#F43F5E"/>
+  <text x="810" y="537" text-anchor="middle" class="pathLabel" fill="#FFFFFF">Cross-Cutting Freshness Read</text>
+
+
+</svg>

@@ -1,0 +1,487 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="2100" viewBox="0 0 1800 2100" role="img" aria-labelledby="title desc">
+  <title id="title">Worker Scalability &amp; Session Telemetry Compute Flow</title>
+  <desc id="desc">Comprehensive view of the asynchronous worker architecture, queue topology, and the highly detailed session telemetry compute and caching lifecycle.</desc>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0B1220"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="panelGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+    <linearGradient id="queueGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#78350F"/>
+      <stop offset="100%" stop-color="#451A03"/>
+    </linearGradient>
+    <linearGradient id="workerGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#064E3B"/>
+      <stop offset="100%" stop-color="#022C22"/>
+    </linearGradient>
+    
+    <marker id="arrowBlue" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#3B82F6"/>
+    </marker>
+    <marker id="arrowPurple" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#8B5CF6"/>
+    </marker>
+    <marker id="arrowAmber" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#F59E0B"/>
+    </marker>
+    <marker id="arrowEmerald" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#10B981"/>
+    </marker>
+    <marker id="arrowTeal" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#14B8A6"/>
+    </marker>
+    <marker id="arrowRose" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#F43F5E"/>
+    </marker>
+    <marker id="arrowSlate" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#94A3B8"/>
+    </marker>
+
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+
+    <style>
+      .title { font: 700 28px Inter, -apple-system, sans-serif; fill: #F8FAFC; }
+      .subtitle { font: 400 15px Inter, -apple-system, sans-serif; fill: #94A3B8; }
+      .colHeader { font: 700 16px Inter, -apple-system, sans-serif; fill: #E2E8F0; }
+      .cardTitle { font: 700 14px Inter, -apple-system, sans-serif; fill: #F8FAFC; }
+      .cardMeta { font: 400 12px Inter, -apple-system, sans-serif; fill: #CBD5E1; }
+      .badgeText { font: 700 11px Inter, -apple-system, sans-serif; fill: #FFFFFF; }
+      .legendTitle { font: 700 14px Inter, -apple-system, sans-serif; fill: #E2E8F0; }
+      .legendText { font: 500 13px Inter, -apple-system, sans-serif; fill: #94A3B8; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1800" height="2100" rx="24" fill="url(#bg)"/>
+  <rect x="32" y="32" width="1736" height="2036" rx="20" fill="none" stroke="#1E293B" stroke-width="2"/>
+
+  <!-- ========================================================= -->
+  <!-- PANEL 1: GENERIC WORKER ARCHITECTURE                      -->
+  <!-- ========================================================= -->
+
+  <text x="64" y="80" class="title">Worker Execution &amp; Concurrency Topology</text>
+  <text x="64" y="106" class="subtitle">Decoupled asynchronous processing separated by durable queues, strict dispatch boundaries, and granular resource controls.</text>
+
+  <!-- Legend Panel 1 -->
+  <rect x="1460" y="46" width="280" height="80" rx="12" fill="rgba(15, 23, 42, 0.8)" stroke="#334155"/>
+  <text x="1480" y="70" class="legendTitle">Arrow Reference Guide</text>
+  <path d="M 1480 90 L 1520 90" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrowSlate)"/>
+  <text x="1535" y="94" class="legendText">Direct / Synchronous Call</text>
+  <path d="M 1480 110 L 1520 110" stroke="#94A3B8" stroke-width="2" stroke-dasharray="4,4" fill="none" marker-end="url(#arrowSlate)"/>
+  <text x="1535" y="114" class="legendText">Async Enqueue / Dequeue</text>
+
+  <!-- Panel 1 Columns -->
+  <rect x="64" y="140" width="240" height="460" rx="16" fill="rgba(30, 58, 138, 0.15)" stroke="#1D4ED8"/>
+  <text x="84" y="170" class="colHeader">1. Triggers</text>
+
+  <rect x="358" y="140" width="240" height="460" rx="16" fill="rgba(76, 29, 149, 0.15)" stroke="#7C3AED"/>
+  <text x="378" y="170" class="colHeader">2. Producer Services</text>
+
+  <rect x="652" y="140" width="360" height="460" rx="16" fill="rgba(180, 83, 9, 0.15)" stroke="#D97706"/>
+  <text x="672" y="170" class="colHeader">3. Queue Fabric</text>
+
+  <rect x="1066" y="140" width="360" height="460" rx="16" fill="rgba(17, 94, 89, 0.15)" stroke="#0F766E"/>
+  <text x="1086" y="170" class="colHeader">4. Worker Execution</text>
+
+  <rect x="1480" y="140" width="260" height="460" rx="16" fill="rgba(15, 23, 42, 0.4)" stroke="#475569"/>
+  <text x="1500" y="170" class="colHeader">5. Domain &amp; Storage</text>
+
+  <!-- Col 1: Triggers Nodes -->
+  <g filter="url(#shadow)">
+    <rect x="84" y="200" width="200" height="60" rx="12" fill="#0F172A" stroke="#334155"/>
+    <rect x="84" y="200" width="6" height="60" rx="3" fill="#3B82F6"/>
+    <text x="104" y="224" class="cardTitle">API Requests</text>
+    <text x="104" y="244" class="cardMeta">Web service endpoints</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="84" y="300" width="200" height="60" rx="12" fill="#0F172A" stroke="#334155"/>
+    <rect x="84" y="300" width="6" height="60" rx="3" fill="#3B82F6"/>
+    <text x="104" y="324" class="cardTitle">Domain Events</text>
+    <text x="104" y="344" class="cardMeta">Internal system events</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="84" y="400" width="200" height="60" rx="12" fill="#0F172A" stroke="#334155"/>
+    <rect x="84" y="400" width="6" height="60" rx="3" fill="#3B82F6"/>
+    <text x="104" y="424" class="cardTitle">Scheduled Jobs</text>
+    <text x="104" y="444" class="cardMeta">BullMQ cron schedules</text>
+  </g>
+
+  <!-- Col 2: Producer Services Nodes -->
+  <g filter="url(#shadow)">
+    <rect x="378" y="200" width="200" height="60" rx="12" fill="#0F172A" stroke="#334155"/>
+    <rect x="378" y="200" width="6" height="60" rx="3" fill="#8B5CF6"/>
+    <text x="398" y="224" class="cardTitle">HealthIngestQueue</text>
+    <text x="398" y="244" class="cardMeta">Batches raw health data</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="378" y="300" width="200" height="60" rx="12" fill="#0F172A" stroke="#334155"/>
+    <rect x="378" y="300" width="6" height="60" rx="3" fill="#8B5CF6"/>
+    <text x="398" y="324" class="cardTitle">SessionTelemetryQueue</text>
+    <text x="398" y="344" class="cardMeta">Enqueues compute tasks</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="378" y="400" width="200" height="60" rx="12" fill="#0F172A" stroke="#334155"/>
+    <rect x="378" y="400" width="6" height="60" rx="3" fill="#8B5CF6"/>
+    <text x="398" y="424" class="cardTitle">Maint. Schedulers</text>
+    <text x="398" y="444" class="cardMeta">Reapers &amp; Reconcilers</text>
+  </g>
+
+  <!-- Col 3: Queue Fabric Nodes -->
+  <g filter="url(#shadow)">
+    <rect x="672" y="190" width="320" height="390" rx="16" fill="url(#queueGrad)" stroke="#B45309" stroke-width="2"/>
+    <text x="692" y="220" class="colHeader" fill="#FDE68A">JobManagerService &amp; BullMQ</text>
+    <text x="692" y="240" class="cardMeta" fill="#FCD34D">Dedicated noeviction Redis Instance</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="692" y="260" width="280" height="60" rx="12" fill="#0F172A" stroke="#F59E0B"/>
+    <rect x="692" y="260" width="6" height="60" rx="3" fill="#F59E0B"/>
+    <text x="712" y="284" class="cardTitle">HEALTH_INGEST_BATCH</text>
+    <text x="712" y="304" class="cardMeta">DB-heavy, high volume</text>
+    <rect x="892" y="275" width="65" height="20" rx="10" fill="#78350F" stroke="#F59E0B"/>
+    <text x="924" y="289" class="badgeText" text-anchor="middle" fill="#FDE68A">CONC: 3</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="692" y="350" width="280" height="60" rx="12" fill="#0F172A" stroke="#F59E0B"/>
+    <rect x="692" y="350" width="6" height="60" rx="3" fill="#F59E0B"/>
+    <text x="712" y="374" class="cardTitle">SESSION_TELEMETRY</text>
+    <text x="712" y="394" class="cardMeta">CPU-heavy computation</text>
+    <rect x="892" y="365" width="65" height="20" rx="10" fill="#78350F" stroke="#F59E0B"/>
+    <text x="924" y="379" class="badgeText" text-anchor="middle" fill="#FDE68A">CONC: 8</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="692" y="440" width="280" height="60" rx="12" fill="#0F172A" stroke="#F59E0B"/>
+    <rect x="692" y="440" width="6" height="60" rx="3" fill="#F59E0B"/>
+    <text x="712" y="464" class="cardTitle">MAINTENANCE_QUEUES</text>
+    <text x="712" y="484" class="cardMeta">Reapers &amp; Cleanup jobs</text>
+    <rect x="892" y="455" width="65" height="20" rx="10" fill="#78350F" stroke="#F59E0B"/>
+    <text x="924" y="469" class="badgeText" text-anchor="middle" fill="#FDE68A">CONC: 1</text>
+  </g>
+
+  <!-- Col 4: Worker Execution Nodes -->
+  <g filter="url(#shadow)">
+    <rect x="1086" y="190" width="320" height="390" rx="16" fill="url(#workerGrad)" stroke="#059669" stroke-width="2"/>
+    <text x="1106" y="220" class="colHeader" fill="#A7F3D0">Worker Replica (Node.js)</text>
+    <text x="1106" y="240" class="cardMeta" fill="#6EE7B7">Horizontally scalable consumer instance</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="1106" y="260" width="280" height="60" rx="12" fill="#0F172A" stroke="#10B981"/>
+    <rect x="1106" y="260" width="6" height="60" rx="3" fill="#10B981"/>
+    <text x="1126" y="284" class="cardTitle">BullMQ Workers</text>
+    <text x="1126" y="304" class="cardMeta">Polls Redis queues concurrently</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="1106" y="350" width="280" height="60" rx="12" fill="#0F172A" stroke="#10B981"/>
+    <rect x="1106" y="350" width="6" height="60" rx="3" fill="#10B981"/>
+    <text x="1126" y="374" class="cardTitle">JobProcessor</text>
+    <text x="1126" y="394" class="cardMeta">Central task dispatcher &amp; injector</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="1106" y="440" width="280" height="60" rx="12" fill="#0F172A" stroke="#10B981"/>
+    <rect x="1106" y="440" width="6" height="60" rx="3" fill="#10B981"/>
+    <text x="1126" y="464" class="cardTitle">Error &amp; Retry Boundary</text>
+    <text x="1126" y="484" class="cardMeta">Catches exceptions for BullMQ</text>
+  </g>
+
+  <!-- Col 5: Domain Services Nodes -->
+  <g filter="url(#shadow)">
+    <rect x="1500" y="200" width="220" height="60" rx="12" fill="#0F172A" stroke="#334155"/>
+    <rect x="1500" y="200" width="6" height="60" rx="3" fill="#0EA5E9"/>
+    <text x="1520" y="224" class="cardTitle">HealthSampleService</text>
+    <text x="1520" y="244" class="cardMeta">Upserts raw data</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="1500" y="300" width="220" height="60" rx="12" fill="#0F172A" stroke="#334155"/>
+    <rect x="1500" y="300" width="6" height="60" rx="3" fill="#0EA5E9"/>
+    <text x="1520" y="324" class="cardTitle">SessionTelemetryService</text>
+    <text x="1520" y="344" class="cardMeta">Computes &amp; caches</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="1500" y="400" width="220" height="60" rx="12" fill="#0F172A" stroke="#334155"/>
+    <rect x="1500" y="400" width="6" height="60" rx="3" fill="#0EA5E9"/>
+    <text x="1520" y="424" class="cardTitle">Reconciliation Services</text>
+    <text x="1520" y="444" class="cardMeta">Stale sessions &amp; inventory</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="1500" y="520" width="220" height="60" rx="12" fill="#1E293B" stroke="#64748B"/>
+    <rect x="1500" y="520" width="6" height="60" rx="3" fill="#64748B"/>
+    <text x="1520" y="544" class="cardTitle">PostgreSQL DB</text>
+    <text x="1520" y="564" class="cardMeta">Canonical Source of Truth</text>
+  </g>
+
+  <!-- Arrow Routing Panel 1 -->
+  <!-- Col 1 -> Col 2 -->
+  <path d="M 284 230 L 378 230" stroke="#3B82F6" stroke-width="2" fill="none" marker-end="url(#arrowBlue)"/>
+  <path d="M 284 330 L 378 330" stroke="#3B82F6" stroke-width="2" fill="none" marker-end="url(#arrowBlue)"/>
+  <path d="M 284 430 L 378 430" stroke="#3B82F6" stroke-width="2" fill="none" marker-end="url(#arrowBlue)"/>
+
+  <!-- Col 2 -> Col 3 -->
+  <path d="M 578 230 L 610 230 L 610 290 L 692 290" stroke="#8B5CF6" stroke-width="2" stroke-dasharray="4,4" fill="none" marker-end="url(#arrowPurple)"/>
+  <path d="M 578 330 L 610 330 L 610 380 L 692 380" stroke="#8B5CF6" stroke-width="2" stroke-dasharray="4,4" fill="none" marker-end="url(#arrowPurple)"/>
+  <path d="M 578 430 L 610 430 L 610 470 L 692 470" stroke="#8B5CF6" stroke-width="2" stroke-dasharray="4,4" fill="none" marker-end="url(#arrowPurple)"/>
+
+  <!-- Col 3 -> Col 4 -->
+  <path d="M 972 290 L 1020 290 L 1020 290 L 1106 290" stroke="#F59E0B" stroke-width="2" stroke-dasharray="4,4" fill="none" marker-end="url(#arrowAmber)"/>
+  <path d="M 972 380 L 1020 380 L 1020 290 L 1106 290" stroke="#F59E0B" stroke-width="2" stroke-dasharray="4,4" fill="none" marker-end="url(#arrowAmber)"/>
+  <path d="M 972 470 L 1020 470 L 1020 290 L 1106 290" stroke="#F59E0B" stroke-width="2" stroke-dasharray="4,4" fill="none" marker-end="url(#arrowAmber)"/>
+
+  <!-- Col 4 Internal -->
+  <path d="M 1246 320 L 1246 350" stroke="#10B981" stroke-width="2" fill="none" marker-end="url(#arrowEmerald)"/>
+  <path d="M 1246 410 L 1246 440" stroke="#10B981" stroke-width="2" fill="none" marker-end="url(#arrowEmerald)"/>
+
+  <!-- Col 4 -> Col 5 -->
+  <path d="M 1386 380 L 1440 380 L 1440 230 L 1500 230" stroke="#10B981" stroke-width="2" fill="none" marker-end="url(#arrowEmerald)"/>
+  <path d="M 1386 380 L 1440 380 L 1440 330 L 1500 330" stroke="#10B981" stroke-width="2" fill="none" marker-end="url(#arrowEmerald)"/>
+  <path d="M 1386 380 L 1440 380 L 1440 430 L 1500 430" stroke="#10B981" stroke-width="2" fill="none" marker-end="url(#arrowEmerald)"/>
+
+  <!-- Col 5 -> DB -->
+  <path d="M 1610 260 L 1610 520" stroke="#0EA5E9" stroke-width="2" fill="none" marker-end="url(#arrowSlate)"/>
+  <path d="M 1610 360 L 1610 520" stroke="#0EA5E9" stroke-width="2" fill="none" marker-end="url(#arrowSlate)"/>
+  <path d="M 1610 460 L 1610 520" stroke="#0EA5E9" stroke-width="2" fill="none" marker-end="url(#arrowSlate)"/>
+
+  <!-- Cross-Cutting Control Band -->
+  <rect x="64" y="630" width="1676" height="150" rx="16" fill="rgba(15, 23, 42, 0.6)" stroke="#334155"/>
+  <text x="84" y="660" class="colHeader">Cross-Cutting Worker Controls &amp; Reliability</text>
+
+  <!-- Control Boxes -->
+  <g filter="url(#shadow)">
+    <rect x="84" y="680" width="394" height="80" rx="12" fill="#0F172A" stroke="#EF4444"/>
+    <text x="104" y="704" class="cardTitle" fill="#FCA5A5">Queue Backpressure &amp; Limits</text>
+    <text x="104" y="724" class="cardMeta">maxQueueLen sheds load with HTTP 429</text>
+    <text x="104" y="744" class="cardMeta">MAX_JOB_PAYLOAD_BYTES drops oversized payloads</text>
+  </g>
+  
+  <g filter="url(#shadow)">
+    <rect x="498" y="680" width="394" height="80" rx="12" fill="#0F172A" stroke="#F59E0B"/>
+    <text x="518" y="704" class="cardTitle" fill="#FDE68A">Resilience &amp; Recovery</text>
+    <text x="518" y="724" class="cardMeta">Exponential backoff &amp; job retries</text>
+    <text x="518" y="744" class="cardMeta">DLQ for poison pills + Stale Lock Reapers</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="912" y="680" width="394" height="80" rx="12" fill="#0F172A" stroke="#10B981"/>
+    <text x="932" y="704" class="cardTitle" fill="#A7F3D0">Idempotency &amp; Locks</text>
+    <text x="932" y="724" class="cardMeta">BullMQ Job IDs deduplicate schedules</text>
+    <text x="932" y="744" class="cardMeta">Redis SET NX PX distributed locks</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="1326" y="680" width="394" height="80" rx="12" fill="#0F172A" stroke="#3B82F6"/>
+    <text x="1346" y="704" class="cardTitle" fill="#93C5FD">Observability &amp; Auto-Scale</text>
+    <text x="1346" y="724" class="cardMeta">Queue depth &amp; processing latency (P99)</text>
+    <text x="1346" y="744" class="cardMeta" fill="#60A5FA">Inferred external triggers for K8s HPA / ECS</text>
+  </g>
+
+  <!-- Divider -->
+  <line x1="32" y1="830" x2="1768" y2="830" stroke="#334155" stroke-dasharray="8,8" stroke-width="2"/>
+
+
+  <!-- ========================================================= -->
+  <!-- PANEL 2: SESSION TELEMETRY COMPUTE FLOW                   -->
+  <!-- ========================================================= -->
+
+  <text x="64" y="880" class="title">Session Telemetry Compute &amp; Invalidation Flow</text>
+  <text x="64" y="910" class="subtitle">End-to-end exact execution sequence showing trigger, durable queueing, bounded in-process concurrency, caching, and stale refresh.</text>
+
+  <!-- Panel 2 Columns -->
+  <rect x="64" y="950" width="280" height="1030" rx="16" fill="rgba(225, 29, 72, 0.15)" stroke="#E11D48"/>
+  <text x="84" y="980" class="colHeader">1. Event &amp; Enqueue</text>
+
+  <rect x="394" y="950" width="380" height="1030" rx="16" fill="rgba(17, 94, 89, 0.15)" stroke="#0F766E"/>
+  <text x="414" y="980" class="colHeader">2. Worker Dispatch</text>
+
+  <rect x="824" y="950" width="500" height="1030" rx="16" fill="rgba(13, 148, 136, 0.15)" stroke="#0D9488"/>
+  <text x="844" y="980" class="colHeader">3. Compute Engine</text>
+
+  <rect x="1374" y="950" width="370" height="1030" rx="16" fill="rgba(79, 70, 229, 0.15)" stroke="#4F46E5"/>
+  <text x="1394" y="980" class="colHeader">4. Storage &amp; Read API</text>
+
+  <!-- Col 1 Nodes -->
+  <g filter="url(#shadow)">
+    <rect x="84" y="1010" width="240" height="60" rx="12" fill="#4C0519" stroke="#F43F5E"/>
+    <rect x="84" y="1010" width="6" height="60" rx="3" fill="#F43F5E"/>
+    <text x="104" y="1034" class="cardTitle">event: session.ended</text>
+    <text x="104" y="1054" class="cardMeta">Domain event trigger</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="84" y="1100" width="240" height="60" rx="12" fill="#0F172A" stroke="#F43F5E"/>
+    <rect x="84" y="1100" width="6" height="60" rx="3" fill="#F43F5E"/>
+    <text x="104" y="1124" class="cardTitle">SessionTelemetrySubscriber</text>
+    <text x="104" y="1144" class="cardMeta">Listens to domain bus</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="84" y="1190" width="240" height="60" rx="12" fill="#0F172A" stroke="#F43F5E"/>
+    <rect x="84" y="1190" width="6" height="60" rx="3" fill="#F43F5E"/>
+    <text x="104" y="1214" class="cardTitle">SessionTelemetryQueueSvc</text>
+    <text x="104" y="1234" class="cardMeta">Prepares job payload</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="84" y="1280" width="240" height="60" rx="12" fill="#0F172A" stroke="#F59E0B"/>
+    <rect x="84" y="1280" width="6" height="60" rx="3" fill="#F59E0B"/>
+    <text x="104" y="1304" class="cardTitle">JobManager.enqueueJob</text>
+    <text x="104" y="1324" class="cardMeta">Pushes to Redis broker</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="84" y="1390" width="240" height="80" rx="12" fill="#451A03" stroke="#F59E0B"/>
+    <rect x="84" y="1390" width="6" height="80" rx="3" fill="#F59E0B"/>
+    <text x="104" y="1420" class="cardTitle">BullMQ: SESSION_TELEMETRY</text>
+    <text x="104" y="1440" class="cardMeta">Durable job queue in Redis</text>
+  </g>
+
+  <!-- Col 2 Nodes -->
+  <g filter="url(#shadow)">
+    <rect x="414" y="1340" width="340" height="420" rx="16" fill="url(#workerGrad)" stroke="#10B981" stroke-width="2"/>
+    <text x="434" y="1370" class="colHeader" fill="#A7F3D0">Worker Replica (Node.js)</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="434" y="1400" width="300" height="60" rx="12" fill="#0F172A" stroke="#10B981"/>
+    <rect x="434" y="1400" width="6" height="60" rx="3" fill="#10B981"/>
+    <text x="454" y="1424" class="cardTitle">BullMQ Worker</text>
+    <text x="454" y="1444" class="cardMeta">Pulls job based on concurrency limit</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="434" y="1510" width="300" height="60" rx="12" fill="#0F172A" stroke="#10B981"/>
+    <rect x="434" y="1510" width="6" height="60" rx="3" fill="#10B981"/>
+    <text x="454" y="1534" class="cardTitle">JobProcessor</text>
+    <text x="454" y="1554" class="cardMeta">Routes job by type</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="434" y="1620" width="300" height="60" rx="12" fill="#0F172A" stroke="#10B981"/>
+    <rect x="434" y="1620" width="6" height="60" rx="3" fill="#10B981"/>
+    <text x="454" y="1644" class="cardTitle">processSessionTelemetryCompute</text>
+    <text x="454" y="1664" class="cardMeta">Executes handler wrapper</text>
+  </g>
+
+  <!-- Col 3 Nodes -->
+  <g filter="url(#shadow)">
+    <rect x="844" y="1120" width="460" height="820" rx="16" fill="url(#panelGrad)" stroke="#14B8A6" stroke-width="2"/>
+    <text x="864" y="1150" class="colHeader" fill="#5EEAD4">SessionTelemetryService</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="864" y="1610" width="420" height="80" rx="12" fill="#0F172A" stroke="#14B8A6"/>
+    <rect x="864" y="1610" width="6" height="80" rx="3" fill="#14B8A6"/>
+    <text x="884" y="1634" class="cardTitle">BoundedComputeCoordinator</text>
+    <text x="884" y="1654" class="cardMeta">In-process AsyncSemaphore to prevent node overload</text>
+    <rect x="884" y="1665" width="80" height="20" rx="10" fill="#064E3B" stroke="#10B981"/>
+    <text x="924" y="1679" class="badgeText" text-anchor="middle" fill="#A7F3D0">CONC: 3</text>
+    <rect x="974" y="1665" width="80" height="20" rx="10" fill="#4C1D95" stroke="#8B5CF6"/>
+    <text x="1014" y="1679" class="badgeText" text-anchor="middle" fill="#DDD6FE">PEND: 50</text>
+  </g>
+  
+  <g filter="url(#shadow)">
+    <rect x="864" y="1730" width="420" height="60" rx="12" fill="#0F172A" stroke="#14B8A6"/>
+    <rect x="864" y="1730" width="6" height="60" rx="3" fill="#14B8A6"/>
+    <text x="884" y="1754" class="cardTitle">tryAcquireComputeLock</text>
+    <text x="884" y="1774" class="cardMeta">Atomic PostgreSQL lease to prevent redundant computes</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="864" y="1830" width="420" height="60" rx="12" fill="#0F172A" stroke="#14B8A6"/>
+    <rect x="864" y="1830" width="6" height="60" rx="3" fill="#14B8A6"/>
+    <text x="884" y="1854" class="cardTitle">Compute &amp; Downsample</text>
+    <text x="884" y="1874" class="cardMeta">Aggregate raw samples into window resolutions (1m, 5m)</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="864" y="1910" width="420" height="60" rx="12" fill="#1E293B" stroke="#6366F1"/>
+    <rect x="864" y="1910" width="6" height="60" rx="3" fill="#6366F1"/>
+    <text x="884" y="1934" class="cardTitle">Write Cache (status: READY)</text>
+    <text x="884" y="1954" class="cardMeta">Upsert JSONB blob tagged with sourceWatermark</text>
+  </g>
+
+  <!-- Col 4 Nodes -->
+  <g filter="url(#shadow)">
+    <rect x="1394" y="1010" width="330" height="60" rx="12" fill="#4C0519" stroke="#F43F5E"/>
+    <rect x="1394" y="1010" width="6" height="60" rx="3" fill="#F43F5E"/>
+    <text x="1414" y="1034" class="cardTitle">event: health.samples.changed</text>
+    <text x="1414" y="1054" class="cardMeta">Data modification trigger</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="1394" y="1100" width="330" height="60" rx="12" fill="#0F172A" stroke="#F43F5E"/>
+    <rect x="1394" y="1100" width="6" height="60" rx="3" fill="#F43F5E"/>
+    <text x="1414" y="1124" class="cardTitle">TelemetryCacheProjectionHandler</text>
+    <text x="1414" y="1144" class="cardMeta">Identifies overlapping cached sessions</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="1394" y="1190" width="330" height="100" rx="12" fill="#1E1B4B" stroke="#6366F1"/>
+    <rect x="1394" y="1190" width="6" height="100" rx="3" fill="#6366F1"/>
+    <text x="1414" y="1220" class="cardTitle">SessionTelemetryCache (DB)</text>
+    <text x="1414" y="1245" class="cardMeta">Pre-computed metrics storage</text>
+    <text x="1414" y="1265" class="cardMeta" fill="#FCA5A5">Status updated to: STALE</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="1394" y="1730" width="330" height="60" rx="12" fill="#0F172A" stroke="#64748B"/>
+    <rect x="1394" y="1730" width="6" height="60" rx="3" fill="#64748B"/>
+    <text x="1414" y="1754" class="cardTitle">UserHealthWatermark (DB)</text>
+    <text x="1414" y="1774" class="cardMeta">Read sequence number</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="1394" y="1830" width="330" height="60" rx="12" fill="#0F172A" stroke="#64748B"/>
+    <rect x="1394" y="1830" width="6" height="60" rx="3" fill="#64748B"/>
+    <text x="1414" y="1854" class="cardTitle">HealthSample (DB)</text>
+    <text x="1414" y="1874" class="cardMeta">Read raw source data</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="1394" y="1910" width="330" height="60" rx="12" fill="#1E3A8A" stroke="#3B82F6"/>
+    <rect x="1394" y="1910" width="6" height="60" rx="3" fill="#3B82F6"/>
+    <text x="1414" y="1934" class="cardTitle">API: GET /session/telemetry</text>
+    <text x="1414" y="1954" class="cardMeta">Client read request</text>
+  </g>
+
+
+  <!-- Arrow Routing Panel 2 -->
+  <!-- Col 1 Downwards -->
+  <path d="M 204 1070 L 204 1100" stroke="#F43F5E" stroke-width="2" fill="none" marker-end="url(#arrowRose)"/>
+  <path d="M 204 1160 L 204 1190" stroke="#F43F5E" stroke-width="2" fill="none" marker-end="url(#arrowRose)"/>
+  <path d="M 204 1250 L 204 1280" stroke="#F59E0B" stroke-width="2" fill="none" marker-end="url(#arrowAmber)"/>
+  <path d="M 204 1340 L 204 1390" stroke="#F59E0B" stroke-width="2" stroke-dasharray="4,4" fill="none" marker-end="url(#arrowAmber)"/>
+
+  <!-- Col 1 to Col 2 -->
+  <path d="M 324 1430 L 434 1430" stroke="#F59E0B" stroke-width="2" stroke-dasharray="4,4" fill="none" marker-end="url(#arrowAmber)"/>
+
+  <!-- Col 2 Downwards -->
+  <path d="M 584 1460 L 584 1510" stroke="#10B981" stroke-width="2" fill="none" marker-end="url(#arrowEmerald)"/>
+  <path d="M 584 1570 L 584 1620" stroke="#10B981" stroke-width="2" fill="none" marker-end="url(#arrowEmerald)"/>
+
+  <!-- Col 2 to Col 3 -->
+  <path d="M 734 1650 L 864 1650" stroke="#14B8A6" stroke-width="2" fill="none" marker-end="url(#arrowTeal)"/>
+
+  <!-- Col 3 Downwards -->
+  <path d="M 1074 1690 L 1074 1730" stroke="#14B8A6" stroke-width="2" fill="none" marker-end="url(#arrowTeal)"/>
+  <path d="M 1074 1790 L 1074 1830" stroke="#14B8A6" stroke-width="2" fill="none" marker-end="url(#arrowTeal)"/>
+  <path d="M 1074 1890 L 1074 1910" stroke="#14B8A6" stroke-width="2" fill="none" marker-end="url(#arrowTeal)"/>
+
+  <!-- Col 3 to Col 4 (Reads) -->
+  <path d="M 1284 1760 L 1394 1760" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrowSlate)"/>
+  <path d="M 1284 1860 L 1394 1860" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrowSlate)"/>
+
+  <!-- Col 3 to Col 4 (Write Cache) -->
+  <path d="M 1284 1940 L 1324 1940 L 1324 1240 L 1394 1240" stroke="#6366F1" stroke-width="2" fill="none" marker-end="url(#arrowPurple)"/>
+
+  <!-- Col 4 Invalidation Downwards -->
+  <path d="M 1559 1070 L 1559 1100" stroke="#F43F5E" stroke-width="2" fill="none" marker-end="url(#arrowRose)"/>
+  <path d="M 1559 1160 L 1559 1190" stroke="#F43F5E" stroke-width="2" fill="none" marker-end="url(#arrowRose)"/>
+
+  <!-- Col 4 API Read -->
+  <path d="M 1559 1910 L 1559 1290" stroke="#3B82F6" stroke-width="2" fill="none" marker-end="url(#arrowBlue)"/>
+
+  <!-- Lazy Recompute Async Path (API GET -> QueueService) -->
+  <path d="M 1394 1940 L 50 1940 L 50 1220 L 84 1220" stroke="#F43F5E" stroke-width="2" stroke-dasharray="6,4" fill="none" marker-end="url(#arrowRose)"/>
+  <rect x="550" y="1928" width="220" height="24" rx="12" fill="#4C0519" stroke="#F43F5E"/>
+  <text x="660" y="1944" class="cardMeta" text-anchor="middle" fill="#FDA4AF">If STALE: Async Lazy Recompute</text>
+
+</svg>

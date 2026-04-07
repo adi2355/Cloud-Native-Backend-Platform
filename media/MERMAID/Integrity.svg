@@ -1,0 +1,221 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1060" viewBox="0 0 1440 1060" role="img" aria-labelledby="title desc">
+  <title id="title">Transactional Outbox Pattern Sequence</title>
+  <desc id="desc">Sequence diagram illustrating atomic primary mutations with reliable asynchronous event delivery.</desc>
+
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0B1220"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    
+    <!-- Transaction Box Gradient -->
+    <linearGradient id="txGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(6, 78, 59, 0.3)"/>
+      <stop offset="100%" stop-color="rgba(6, 78, 59, 0.1)"/>
+    </linearGradient>
+
+    <!-- Arrow Markers -->
+    <marker id="arrow-client" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#94A3B8"/>
+    </marker>
+    <marker id="arrow-api" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#2DD4BF"/>
+    </marker>
+    <marker id="arrow-db" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#60A5FA"/>
+    </marker>
+    <marker id="arrow-outbox" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#C084FC"/>
+    </marker>
+    <marker id="arrow-subs" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#FBBF24"/>
+    </marker>
+    <marker id="arrow-return" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#64748B"/>
+    </marker>
+
+    <!-- Filters -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+    <filter id="glowGreen" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="#10B981" flood-opacity="0.3"/>
+    </filter>
+    <filter id="glowPurple" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="#A855F7" flood-opacity="0.3"/>
+    </filter>
+
+    <style>
+      .title { font: 700 28px Inter, -apple-system, sans-serif; fill: #F8FAFC; }
+      .subtitle { font: 400 15px Inter, -apple-system, sans-serif; fill: #94A3B8; }
+      .participantTitle { font: 700 15px Inter, -apple-system, sans-serif; fill: #F8FAFC; }
+      .participantDesc { font: 500 12px Inter, -apple-system, sans-serif; }
+      .msgText { font: 600 13px Inter, -apple-system, sans-serif; fill: #E2E8F0; }
+      .codeText { font: 500 13px "JetBrains Mono", monospace; }
+      .codeKeyword { fill: #38BDF8; font-weight: 700; }
+      .codeString { fill: #A7F3D0; }
+      .codeEntity { fill: #C4B5FD; }
+      .badgeText { font: 700 11px Inter, -apple-system, sans-serif; fill: #FFFFFF; text-transform: uppercase; letter-spacing: 0.05em; }
+      .txTitle { font: 700 16px Inter, -apple-system, sans-serif; fill: #34D399; }
+      .txDesc { font: 500 13px Inter, -apple-system, sans-serif; fill: #A7F3D0; }
+      .phaseTitle { font: 700 14px Inter, -apple-system, sans-serif; fill: #CBD5E1; letter-spacing: 0.1em; text-transform: uppercase; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1440" height="1060" rx="24" fill="url(#bg)"/>
+  <rect x="32" y="32" width="1376" height="996" rx="20" fill="none" stroke="#1E293B"/>
+
+  <!-- Header -->
+  <text x="64" y="80" class="title">Transactional Outbox Pattern Sequence</text>
+  <text x="64" y="106" class="subtitle">Guarantees atomic persistence of primary data mutations alongside asynchronous domain events.</text>
+
+  <!-- ========================================== -->
+  <!-- PARTICIPANTS & LIFELINES                   -->
+  <!-- ========================================== -->
+
+  <!-- Lifeline lines -->
+  <line x1="150" y1="210" x2="150" y2="1000" stroke="#334155" stroke-width="2" stroke-dasharray="6 6"/>
+  <line x1="420" y1="210" x2="420" y2="1000" stroke="#334155" stroke-width="2" stroke-dasharray="6 6"/>
+  <line x1="760" y1="210" x2="760" y2="1000" stroke="#334155" stroke-width="2" stroke-dasharray="6 6"/>
+  <line x1="1080" y1="210" x2="1080" y2="1000" stroke="#334155" stroke-width="2" stroke-dasharray="6 6"/>
+  <line x1="1320" y1="210" x2="1320" y2="1000" stroke="#334155" stroke-width="2" stroke-dasharray="6 6"/>
+
+  <!-- Headers -->
+  <g filter="url(#shadow)">
+    <!-- Client -->
+    <rect x="70" y="140" width="160" height="60" rx="12" fill="#1E293B" stroke="#475569"/>
+    <rect x="80" y="150" width="4" height="40" rx="2" fill="#94A3B8"/>
+    <text x="94" y="165" class="participantTitle">Client</text>
+    <text x="94" y="185" class="participantDesc" fill="#94A3B8">Mobile App / Web</text>
+
+    <!-- API -->
+    <rect x="340" y="140" width="160" height="60" rx="12" fill="#042F2E" stroke="#10B981"/>
+    <rect x="350" y="150" width="4" height="40" rx="2" fill="#34D399"/>
+    <text x="364" y="165" class="participantTitle">API / Service</text>
+    <text x="364" y="185" class="participantDesc" fill="#6EE7B7">Web Node</text>
+
+    <!-- Database -->
+    <rect x="680" y="140" width="160" height="60" rx="12" fill="#1E3A8A" stroke="#3B82F6"/>
+    <rect x="690" y="150" width="4" height="40" rx="2" fill="#60A5FA"/>
+    <text x="704" y="165" class="participantTitle">PostgreSQL</text>
+    <text x="704" y="185" class="participantDesc" fill="#93C5FD">Database (TX)</text>
+
+    <!-- Outbox -->
+    <rect x="1000" y="140" width="160" height="60" rx="12" fill="#3B0764" stroke="#A855F7"/>
+    <rect x="1010" y="150" width="4" height="40" rx="2" fill="#C084FC"/>
+    <text x="1024" y="165" class="participantTitle">Outbox Processor</text>
+    <text x="1024" y="185" class="participantDesc" fill="#D8B4FE">Background Worker</text>
+
+    <!-- Subscribers -->
+    <rect x="1240" y="140" width="160" height="60" rx="12" fill="#78350F" stroke="#F59E0B"/>
+    <rect x="1250" y="150" width="4" height="40" rx="2" fill="#FBBF24"/>
+    <text x="1264" y="165" class="participantTitle">Subscribers</text>
+    <text x="1264" y="185" class="participantDesc" fill="#FDE68A">Projections, WS</text>
+  </g>
+
+  <!-- ========================================== -->
+  <!-- PHASE 1: SYNCHRONOUS TRANSACTION           -->
+  <!-- ========================================== -->
+
+  <!-- API Activation Box -->
+  <rect x="414" y="240" width="12" height="320" rx="4" fill="#0D9488" stroke="#14B8A6"/>
+
+  <!-- Client -> API -->
+  <path d="M 150 260 L 404 260" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow-client)"/>
+  <text x="285" y="250" text-anchor="middle" class="msgText">POST /consumptions</text>
+
+  <!-- TRANSACTION BOX -->
+  <g filter="url(#glowGreen)">
+    <rect x="400" y="280" width="386" height="230" rx="12" fill="url(#txGrad)" stroke="#10B981" stroke-width="2" stroke-dasharray="6 4"/>
+  </g>
+  <rect x="400" y="280" width="160" height="30" rx="6" fill="#064E3B" stroke="#10B981"/>
+  <text x="480" y="300" text-anchor="middle" class="txTitle">Atomic Database TX</text>
+
+  <!-- DB Activation Box 1 (Transaction) -->
+  <rect x="754" y="310" width="12" height="180" rx="4" fill="#2563EB" stroke="#3B82F6"/>
+
+  <!-- API -> DB: BEGIN TX -->
+  <path d="M 426 330 L 744 330" stroke="#2DD4BF" stroke-width="2" fill="none" marker-end="url(#arrow-api)"/>
+  <text x="585" y="320" text-anchor="middle" class="codeText" fill="#34D399"><tspan class="codeKeyword">BEGIN</tspan> TRANSACTION</text>
+
+  <!-- API -> DB: INSERT consumption -->
+  <path d="M 426 380 L 744 380" stroke="#2DD4BF" stroke-width="2" fill="none" marker-end="url(#arrow-api)"/>
+  <text x="585" y="370" text-anchor="middle" class="codeText"><tspan class="codeKeyword">INSERT INTO</tspan> consumptions</text>
+
+  <!-- API -> DB: INSERT outbox_events -->
+  <path d="M 426 430 L 744 430" stroke="#2DD4BF" stroke-width="2" fill="none" marker-end="url(#arrow-api)"/>
+  <text x="585" y="420" text-anchor="middle" class="codeText"><tspan class="codeKeyword">INSERT INTO</tspan> outbox_events</text>
+  <rect x="610" y="435" width="130" height="20" rx="4" fill="#3B0764" stroke="#A855F7"/>
+  <text x="675" y="449" text-anchor="middle" class="codeText" font-size="11" fill="#D8B4FE">evt: <tspan fill="#FFFFFF">consumption.created</tspan></text>
+
+  <!-- DB -> API: COMMIT TX -->
+  <path d="M 754 480 L 436 480" stroke="#64748B" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#arrow-return)"/>
+  <text x="585" y="470" text-anchor="middle" class="codeText" fill="#34D399"><tspan class="codeKeyword">COMMIT</tspan> TRANSACTION</text>
+
+  <!-- API -> Client: 200 OK -->
+  <path d="M 414 540 L 160 540" stroke="#64748B" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#arrow-return)"/>
+  <text x="285" y="530" text-anchor="middle" class="msgText" fill="#22C55E">200 OK</text>
+
+
+  <!-- ========================================== -->
+  <!-- PHASE SEPARATOR                            -->
+  <!-- ========================================== -->
+  <line x1="64" y1="600" x2="1376" y2="600" stroke="#334155" stroke-width="2" stroke-dasharray="8 4"/>
+  <rect x="520" y="586" width="400" height="28" rx="14" fill="#0F172A" stroke="#475569"/>
+  <text x="720" y="605" text-anchor="middle" class="phaseTitle">Asynchronous Event Delivery (Decoupled)</text>
+
+
+  <!-- ========================================== -->
+  <!-- PHASE 2: ASYNCHRONOUS DELIVERY             -->
+  <!-- ========================================== -->
+
+  <!-- Outbox Activation Box -->
+  <rect x="1074" y="660" width="12" height="260" rx="4" fill="#9333EA" stroke="#A855F7"/>
+
+  <!-- Outbox -> DB: SELECT PENDING -->
+  <rect x="754" y="680" width="12" height="60" rx="4" fill="#2563EB" stroke="#3B82F6"/>
+  <path d="M 1074 690 L 776 690" stroke="#C084FC" stroke-width="2" fill="none" marker-end="url(#arrow-outbox)"/>
+  <text x="920" y="675" text-anchor="middle" class="codeText"><tspan class="codeKeyword">SELECT</tspan> * <tspan class="codeKeyword">FROM</tspan> outbox_events</text>
+  <text x="920" y="695" text-anchor="middle" class="codeText"><tspan class="codeKeyword">WHERE</tspan> status = <tspan class="codeString">'PENDING'</tspan></text>
+
+  <!-- DB -> Outbox: Return Data -->
+  <path d="M 766 730 L 1064 730" stroke="#64748B" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#arrow-return)"/>
+  <text x="920" y="720" text-anchor="middle" class="codeText" fill="#93C5FD">[ { id: 123, payload: ... } ]</text>
+
+  <!-- Outbox -> Subs: Process Event -->
+  <rect x="1314" y="780" width="12" height="60" rx="4" fill="#D97706" stroke="#F59E0B"/>
+  <path d="M 1086 790 L 1304 790" stroke="#C084FC" stroke-width="2" fill="none" marker-end="url(#arrow-outbox)"/>
+  <text x="1200" y="780" text-anchor="middle" class="msgText" fill="#D8B4FE">Process Event</text>
+  <rect x="1120" y="795" width="160" height="20" rx="4" fill="#3B0764" stroke="#A855F7"/>
+  <text x="1200" y="809" text-anchor="middle" class="codeText" font-size="11" fill="#FFFFFF">consumption.created</text>
+
+  <!-- Subs -> Outbox: Ack -->
+  <path d="M 1314 830 L 1096 830" stroke="#64748B" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#arrow-return)"/>
+  <text x="1200" y="820" text-anchor="middle" class="msgText" fill="#FBBF24">Ack (Success)</text>
+
+  <!-- Outbox -> DB: UPDATE COMPLETED -->
+  <rect x="754" y="870" width="12" height="40" rx="4" fill="#2563EB" stroke="#3B82F6"/>
+  <path d="M 1074 880 L 776 880" stroke="#C084FC" stroke-width="2" fill="none" marker-end="url(#arrow-outbox)"/>
+  <text x="920" y="865" text-anchor="middle" class="codeText"><tspan class="codeKeyword">UPDATE</tspan> outbox_events</text>
+  <text x="920" y="885" text-anchor="middle" class="codeText"><tspan class="codeKeyword">SET</tspan> status = <tspan class="codeString">'COMPLETED'</tspan></text>
+
+  <!-- DB -> Outbox: Return OK -->
+  <path d="M 766 900 L 1064 900" stroke="#64748B" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#arrow-return)"/>
+  
+  <!-- ========================================== -->
+  <!-- ARCHITECTURAL BENEFITS FOOTER              -->
+  <!-- ========================================== -->
+  <rect x="64" y="960" width="1312" height="60" rx="12" fill="#0F172A" stroke="#334155"/>
+  <text x="84" y="995" class="participantTitle" fill="#38BDF8">Architectural Guarantees:</text>
+  <text x="310" y="995" class="participantDesc" fill="#94A3B8">1. Eliminates Dual-Write Problem</text>
+  <circle cx="525" cy="991" r="3" fill="#64748B"/>
+  <text x="540" y="995" class="participantDesc" fill="#94A3B8">2. Survives Application Crashes</text>
+  <circle cx="735" cy="991" r="3" fill="#64748B"/>
+  <text x="750" y="995" class="participantDesc" fill="#94A3B8">3. Decouples Write Latency from Downstream Processing</text>
+  <circle cx="1115" cy="991" r="3" fill="#64748B"/>
+  <text x="1130" y="995" class="participantDesc" fill="#94A3B8">4. Ensures Eventual Consistency</text>
+
+</svg>

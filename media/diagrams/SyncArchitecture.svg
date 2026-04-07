@@ -1,0 +1,400 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1250" viewBox="0 0 1800 1250" role="img" aria-labelledby="title desc">
+  <title id="title"> Sync Architecture: End-to-End Component &amp; Data Flow</title>
+  <desc id="desc">Accurate end-to-end generic sync pipeline featuring offline-first local stores, transactional outbox, composite cursor pull, config-driven conflict resolution, and strict integrity gating.</desc>
+
+  <defs>
+    <!-- Background Gradients -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0B1220"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="clientGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(30, 58, 138, 0.15)"/>
+      <stop offset="100%" stop-color="rgba(30, 58, 138, 0.05)"/>
+    </linearGradient>
+    <linearGradient id="apiGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(15, 118, 110, 0.15)"/>
+      <stop offset="100%" stop-color="rgba(15, 118, 110, 0.05)"/>
+    </linearGradient>
+    <linearGradient id="backendGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(88, 28, 135, 0.15)"/>
+      <stop offset="100%" stop-color="rgba(88, 28, 135, 0.05)"/>
+    </linearGradient>
+    <linearGradient id="dbClientGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(6, 78, 59, 0.4)"/>
+      <stop offset="100%" stop-color="rgba(6, 78, 59, 0.1)"/>
+    </linearGradient>
+    <linearGradient id="dbBackendGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(15, 23, 42, 0.6)"/>
+      <stop offset="100%" stop-color="rgba(15, 23, 42, 0.2)"/>
+    </linearGradient>
+    
+    <!-- Marker Definitions -->
+    <marker id="arrow-ctrl" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#F59E0B"/>
+    </marker>
+    <marker id="arrow-data" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#38BDF8"/>
+    </marker>
+    <marker id="arrow-write" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#10B981"/>
+    </marker>
+    <marker id="arrow-conflict" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#EF4444"/>
+    </marker>
+    <marker id="arrow-sync" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#A78BFA"/>
+    </marker>
+
+    <!-- Filters -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+    <filter id="glow-commit" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="#10B981" flood-opacity="0.5"/>
+    </filter>
+
+    <style>
+      .title { font: 700 30px Inter, sans-serif; fill: #F8FAFC; }
+      .subtitle { font: 400 16px Inter, sans-serif; fill: #94A3B8; }
+      .colHeader { font: 800 20px Inter, sans-serif; fill: #E2E8F0; letter-spacing: 0.02em; }
+      .groupTitle { font: 700 16px Inter, sans-serif; fill: #CBD5E1; text-transform: uppercase; letter-spacing: 0.05em; }
+      .cardTitle { font: 700 15px Inter, sans-serif; fill: #F8FAFC; }
+      .cardMeta { font: 400 13px Inter, sans-serif; fill: #94A3B8; }
+      .codePill { font: 600 12px "JetBrains Mono", monospace; fill: #38BDF8; }
+      .badge { font: 700 11px Inter, sans-serif; fill: #FFFFFF; text-transform: uppercase; letter-spacing: 0.05em; }
+      .arrowLabel { font: 600 12px Inter, sans-serif; fill: #CBD5E1; }
+    </style>
+  </defs>
+
+  <!-- Base Canvas -->
+  <rect width="1800" height="1250" rx="24" fill="url(#bg)"/>
+  <rect x="24" y="24" width="1752" height="1202" rx="20" fill="none" stroke="#1E293B" stroke-width="2"/>
+
+  <!-- Header -->
+  <text x="64" y="76" class="title">Sync Architecture: End-to-End Component &amp; Data Flow</text>
+  <text x="64" y="104" class="subtitle">Complete offline-first engine with exact phases: transactional outbox push, cursor-based pagination pull, integrity gating, and conflict resolution.</text>
+
+  <!-- Legend -->
+  <rect x="1460" y="40" width="280" height="96" rx="12" fill="#0F172A" stroke="#334155" filter="url(#shadow)"/>
+  <text x="1480" y="64" class="cardTitle">Flow Legend</text>
+  <path d="M 1480 84 L 1520 84" stroke="#F59E0B" stroke-width="3" fill="none" marker-end="url(#arrow-ctrl)"/>
+  <text x="1535" y="88" class="cardMeta" fill="#FDE68A">Control / Execution Flow</text>
+  <path d="M 1480 108 L 1520 108" stroke="#38BDF8" stroke-width="3" fill="none" marker-end="url(#arrow-data)"/>
+  <text x="1535" y="112" class="cardMeta" fill="#BAE6FD">Data Transfer / HTTP</text>
+
+  <!-- ========================================================= -->
+  <!-- VERTICAL SWIMLANES                                        -->
+  <!-- ========================================================= -->
+  
+  <!-- Client Swimlane -->
+  <rect x="64" y="140" width="560" height="810" rx="16" fill="url(#clientGrad)" stroke="#1D4ED8" stroke-width="2"/>
+  <text x="84" y="176" class="colHeader" fill="#93C5FD">1. Mobile Client Sync Runtime</text>
+
+  <!-- API Boundary Swimlane -->
+  <rect x="648" y="140" width="260" height="780" rx="16" fill="url(#apiGrad)" stroke="#0F766E" stroke-width="2"/>
+  <text x="668" y="176" class="colHeader" fill="#5EEAD4">2. API &amp; Trust Boundary</text>
+
+  <!-- Backend Sync Core Swimlane -->
+  <rect x="932" y="140" width="804" height="780" rx="16" fill="url(#backendGrad)" stroke="#7C3AED" stroke-width="2"/>
+  <text x="952" y="176" class="colHeader" fill="#C4B5FD">3. Backend Sync Core</text>
+
+  <!-- ========================================================= -->
+  <!-- HORIZONTAL DATA STORE BANDS (BOTTOM)                      -->
+  <!-- ========================================================= -->
+  
+  <text x="64" y="975" class="groupTitle">Operational Data Stores</text>
+
+  <!-- Client Data Stores -->
+  <rect x="64" y="980" width="560" height="210" rx="16" fill="url(#dbClientGrad)" stroke="#059669" stroke-width="2"/>
+  <text x="84" y="1010" class="cardTitle" fill="#34D399">Client SQLite (Local DB)</text>
+  
+  <!-- Backend Data Stores -->
+  <rect x="932" y="980" width="804" height="210" rx="16" fill="url(#dbBackendGrad)" stroke="#475569" stroke-width="2"/>
+  <text x="952" y="1010" class="cardTitle" fill="#E2E8F0">Backend PostgreSQL (Source of Truth)</text>
+
+
+  <!-- ========================================================= -->
+  <!-- SECTION 1: TRIGGERS & ORCHESTRATION (TOP LEFT)            -->
+  <!-- ========================================================= -->
+
+  <g filter="url(#shadow)">
+    <rect x="84" y="210" width="120" height="50" rx="8" fill="#0F172A" stroke="#334155"/>
+    <text x="144" y="234" text-anchor="middle" class="cardTitle" font-size="13px">App Foreground</text>
+    <text x="144" y="248" text-anchor="middle" class="cardMeta" font-size="11px">Auto-Trigger</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="220" y="210" width="120" height="50" rx="8" fill="#0F172A" stroke="#334155"/>
+    <text x="280" y="234" text-anchor="middle" class="cardTitle" font-size="13px">Net Reconnect</text>
+    <text x="280" y="248" text-anchor="middle" class="cardMeta" font-size="11px">State Check</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="356" y="210" width="120" height="50" rx="8" fill="#0F172A" stroke="#334155"/>
+    <text x="416" y="234" text-anchor="middle" class="cardTitle" font-size="13px">Interval</text>
+    <text x="416" y="248" text-anchor="middle" class="cardMeta" font-size="11px">Background</text>
+  </g>
+
+  <!-- DataSyncService -->
+  <g filter="url(#shadow)">
+    <rect x="180" y="290" width="240" height="60" rx="12" fill="#1E3A8A" stroke="#3B82F6"/>
+    <rect x="190" y="300" width="4" height="40" rx="2" fill="#93C5FD"/>
+    <text x="204" y="314" class="cardTitle">DataSyncService / Coordinator</text>
+    <text x="204" y="334" class="cardMeta" fill="#BFDBFE">Manages locks, backoff &amp; phases</text>
+  </g>
+
+  <path d="M 144 260 L 144 320 L 180 320" stroke="#F59E0B" stroke-width="2" fill="none" marker-end="url(#arrow-ctrl)"/>
+  <path d="M 280 260 L 280 290" stroke="#F59E0B" stroke-width="2" fill="none" marker-end="url(#arrow-ctrl)"/>
+  <path d="M 416 260 L 416 290" stroke="#F59E0B" stroke-width="2" fill="none" marker-end="url(#arrow-ctrl)"/>
+
+
+  <!-- ========================================================= -->
+  <!-- SECTION 2: PUSH FLOW (TOP ROW)                            -->
+  <!-- ========================================================= -->
+  <text x="84" y="400" class="groupTitle">Push Phase</text>
+
+  <!-- PushEngine (Client) -->
+  <g filter="url(#shadow)">
+    <rect x="84" y="410" width="340" height="80" rx="12" fill="#0F172A" stroke="#64748B"/>
+    <rect x="94" y="420" width="4" height="60" rx="2" fill="#A78BFA"/>
+    <text x="108" y="434" class="cardTitle">PushEngine</text>
+    <text x="108" y="454" class="cardMeta">1. Dequeue Outbox + Tombstones</text>
+    <text x="108" y="474" class="cardMeta">2. In-memory FK Translation &amp; Order</text>
+  </g>
+  <path d="M 300 350 L 300 410" stroke="#F59E0B" stroke-width="3" fill="none" marker-end="url(#arrow-ctrl)"/>
+
+  <!-- API: POST /sync/push -->
+  <g filter="url(#shadow)">
+    <rect x="668" y="410" width="220" height="80" rx="12" fill="#0F172A" stroke="#0D9488"/>
+    <rect x="678" y="420" width="4" height="60" rx="2" fill="#2DD4BF"/>
+    <text x="692" y="434" class="cardTitle">POST /sync/push</text>
+    <text x="692" y="454" class="cardMeta">Zod Validation &amp; Auth</text>
+    <text x="692" y="474" class="cardMeta">Optional Sync Lease</text>
+  </g>
+  <path d="M 424 450 L 668 450" stroke="#38BDF8" stroke-width="3" fill="none" marker-end="url(#arrow-data)"/>
+
+  <!-- Backend: SyncController & SyncService -->
+  <g filter="url(#shadow)">
+    <rect x="952" y="410" width="200" height="80" rx="12" fill="#2E1065" stroke="#8B5CF6"/>
+    <rect x="962" y="420" width="4" height="60" rx="2" fill="#C4B5FD"/>
+    <text x="976" y="434" class="cardTitle">SyncService.processPush</text>
+    <text x="976" y="454" class="cardMeta">Orchestrates conflict</text>
+    <text x="976" y="474" class="cardMeta">detection &amp; DB writes</text>
+  </g>
+  <path d="M 888 450 L 952 450" stroke="#F59E0B" stroke-width="3" fill="none" marker-end="url(#arrow-ctrl)"/>
+
+  <!-- Lock & Idempotency -->
+  <g filter="url(#shadow)">
+    <rect x="1172" y="330" width="160" height="60" rx="8" fill="#450A0A" stroke="#F59E0B"/>
+    <text x="1252" y="355" text-anchor="middle" class="cardTitle">1. Distributed Lock</text>
+    <text x="1252" y="375" text-anchor="middle" class="codePill">SyncState (lockOwner)</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="1352" y="330" width="160" height="60" rx="8" fill="#1E3A8A" stroke="#3B82F6"/>
+    <text x="1432" y="355" text-anchor="middle" class="cardTitle">2. Idempotency Check</text>
+    <text x="1432" y="375" text-anchor="middle" class="codePill">clientSyncOperationId</text>
+  </g>
+  <path d="M 1052 410 L 1052 360 L 1172 360" stroke="#F59E0B" stroke-width="2" fill="none" marker-end="url(#arrow-ctrl)"/>
+  <path d="M 1332 360 L 1352 360" stroke="#F59E0B" stroke-width="2" fill="none" marker-end="url(#arrow-ctrl)"/>
+
+  <!-- Conflict Detection -->
+  <g filter="url(#shadow)">
+    <rect x="1172" y="410" width="180" height="80" rx="12" fill="#0F172A" stroke="#64748B"/>
+    <rect x="1182" y="420" width="4" height="60" rx="2" fill="#F43F5E"/>
+    <text x="1196" y="434" class="cardTitle">3. detectConflict()</text>
+    <text x="1196" y="454" class="cardMeta">Compare entity version</text>
+    <text x="1196" y="474" class="cardMeta">Client vs Server state</text>
+  </g>
+  <path d="M 1152 450 L 1172 450" stroke="#F59E0B" stroke-width="3" fill="none" marker-end="url(#arrow-ctrl)"/>
+
+  <!-- SyncEntityHandlers -->
+  <g filter="url(#shadow)">
+    <rect x="1412" y="410" width="300" height="80" rx="12" fill="#064E3B" stroke="#10B981" filter="url(#glow-commit)"/>
+    <rect x="1422" y="420" width="4" height="60" rx="2" fill="#34D399"/>
+    <text x="1436" y="434" class="cardTitle">4. SyncEntityHandler (Atomic TX)</text>
+    <text x="1436" y="454" class="cardMeta">Executes Config-Driven Merge Rules</text>
+    <text x="1436" y="474" class="cardMeta">Mutates Entity + Outbox (SyncChange)</text>
+  </g>
+  <path d="M 1352 450 L 1412 450" stroke="#10B981" stroke-width="3" fill="none" marker-end="url(#arrow-ctrl)"/>
+
+  <!-- Conflict Outcome -->
+  <path d="M 1262 490 L 1262 560 L 1197 560 L 1197 1055 L 1252 1055" stroke="#EF4444" stroke-width="3" stroke-dasharray="6 4" fill="none" marker-end="url(#arrow-conflict)"/>
+
+
+  <!-- ========================================================= -->
+  <!-- SECTION 3: PULL FLOW (MIDDLE ROW)                         -->
+  <!-- ========================================================= -->
+  <text x="84" y="620" class="groupTitle">Pull Phase</text>
+
+  <!-- PullEngine (Client) -->
+  <g filter="url(#shadow)">
+    <rect x="84" y="630" width="340" height="80" rx="12" fill="#0F172A" stroke="#64748B"/>
+    <rect x="94" y="640" width="4" height="60" rx="2" fill="#38BDF8"/>
+    <text x="108" y="654" class="cardTitle">PullEngine (Pagination Loop)</text>
+    <text x="108" y="674" class="cardMeta">1. Read per-entity cursors</text>
+    <text x="108" y="694" class="cardMeta">2. Build &amp; encode CompositeCursor</text>
+  </g>
+  <path d="M 300 490 L 300 630" stroke="#F59E0B" stroke-width="3" fill="none" marker-end="url(#arrow-ctrl)"/>
+
+  <!-- API: GET /sync/changes -->
+  <g filter="url(#shadow)">
+    <rect x="668" y="630" width="220" height="80" rx="12" fill="#0F172A" stroke="#0D9488"/>
+    <rect x="678" y="640" width="4" height="60" rx="2" fill="#2DD4BF"/>
+    <text x="692" y="654" class="cardTitle">GET /sync/changes</text>
+    <text x="692" y="674" class="cardMeta">Stable ETags</text>
+    <text x="692" y="694" class="cardMeta">Admission Lease Check</text>
+  </g>
+  <path d="M 424 670 L 668 670" stroke="#38BDF8" stroke-width="3" fill="none" marker-end="url(#arrow-data)"/>
+
+  <!-- Backend: Decode & Fetch -->
+  <g filter="url(#shadow)">
+    <rect x="952" y="630" width="220" height="80" rx="12" fill="#0F172A" stroke="#64748B"/>
+    <rect x="962" y="640" width="4" height="60" rx="2" fill="#A78BFA"/>
+    <text x="976" y="654" class="cardTitle">SyncService.getChanges</text>
+    <text x="976" y="674" class="cardMeta">decodeCompositeCursor()</text>
+    <text x="976" y="694" class="cardMeta">Validates schema version</text>
+  </g>
+  <path d="M 888 670 L 952 670" stroke="#F59E0B" stroke-width="3" fill="none" marker-end="url(#arrow-ctrl)"/>
+
+  <g filter="url(#shadow)">
+    <rect x="1212" y="630" width="280" height="80" rx="12" fill="#1E3A8A" stroke="#3B82F6"/>
+    <rect x="1222" y="640" width="4" height="60" rx="2" fill="#93C5FD"/>
+    <text x="1236" y="654" class="cardTitle">SyncChangeRepository</text>
+    <text x="1236" y="674" class="cardMeta">O(log N) Keyset pagination query:</text>
+    <text x="1236" y="694" class="codePill">WHERE createdAt > ? OR ...</text>
+  </g>
+  <path d="M 1172 670 L 1212 670" stroke="#38BDF8" stroke-width="3" fill="none" marker-end="url(#arrow-data)"/>
+
+  <!-- Return Flow -->
+  <path d="M 1352 630 L 1352 580 L 778 580 L 778 630" stroke="#38BDF8" stroke-width="3" stroke-dasharray="6 4" fill="none" marker-end="url(#arrow-data)"/>
+  <path d="M 668 640 L 424 640" stroke="#38BDF8" stroke-width="3" stroke-dasharray="6 4" fill="none" marker-end="url(#arrow-data)"/>
+
+
+  <!-- ========================================================= -->
+  <!-- SECTION 4: APPLY & INTEGRITY (CLIENT LOWER)               -->
+  <!-- ========================================================= -->
+
+  <g filter="url(#shadow)">
+    <rect x="84" y="750" width="340" height="80" rx="12" fill="#0F172A" stroke="#64748B"/>
+    <rect x="94" y="760" width="4" height="60" rx="2" fill="#A78BFA"/>
+    <text x="108" y="774" class="cardTitle">ApplyEngine &amp; Handlers</text>
+    <text x="108" y="794" class="cardMeta">Translates Server UUIDs -> Client UUIDs</text>
+    <text x="108" y="814" class="cardMeta">Mutates local SQLite (deferring cursors)</text>
+  </g>
+  <path d="M 254 710 L 254 750" stroke="#F59E0B" stroke-width="3" fill="none" marker-end="url(#arrow-ctrl)"/>
+
+  <g filter="url(#shadow)">
+    <rect x="84" y="860" width="220" height="80" rx="12" fill="#451A03" stroke="#F59E0B"/>
+    <rect x="94" y="870" width="4" height="60" rx="2" fill="#FDE68A"/>
+    <text x="108" y="884" class="cardTitle">IntegrityGate</text>
+    <text x="108" y="904" class="cardMeta">Pre-commit checks</text>
+    <text x="108" y="924" class="cardMeta">Validates RELATION_GRAPH</text>
+  </g>
+  <path d="M 174 830 L 174 860" stroke="#F59E0B" stroke-width="3" fill="none" marker-end="url(#arrow-ctrl)"/>
+
+  <g filter="url(#shadow)">
+    <rect x="380" y="860" width="160" height="80" rx="12" fill="#064E3B" stroke="#10B981" filter="url(#glow-commit)"/>
+    <rect x="390" y="870" width="4" height="60" rx="2" fill="#34D399"/>
+    <text x="404" y="884" class="cardTitle">Commit Cursors</text>
+    <text x="404" y="904" class="cardMeta">Atomic state save</text>
+    <text x="404" y="924" class="cardMeta">Only if Integrity OK</text>
+  </g>
+  <path d="M 304 900 L 380 900" stroke="#10B981" stroke-width="3" fill="none" marker-end="url(#arrow-ctrl)"/>
+
+
+  <!-- ========================================================= -->
+  <!-- SECTION 5: DATA STORES (BOTTOM BAND)                      -->
+  <!-- ========================================================= -->
+
+  <!-- Client SQLite Stores -->
+  <g filter="url(#shadow)">
+    <rect x="84" y="1030" width="110" height="50" rx="8" fill="#022C22" stroke="#059669"/>
+    <text x="139" y="1060" text-anchor="middle" class="codePill" fill="#6EE7B7">outbox_events</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="204" y="1030" width="110" height="50" rx="8" fill="#022C22" stroke="#059669"/>
+    <text x="259" y="1060" text-anchor="middle" class="codePill" fill="#6EE7B7">id_mappings</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="324" y="1030" width="110" height="50" rx="8" fill="#022C22" stroke="#059669"/>
+    <text x="379" y="1060" text-anchor="middle" class="codePill" fill="#6EE7B7">cursors</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="444" y="1030" width="160" height="50" rx="8" fill="#022C22" stroke="#059669"/>
+    <text x="524" y="1060" text-anchor="middle" class="codePill" fill="#6EE7B7">domain_entities</text>
+  </g>
+
+  <!-- Connect Client Engines to Stores -->
+  <path d="M 84 450 L 44 450 L 44 1055 L 84 1055" stroke="#38BDF8" stroke-width="2" stroke-dasharray="4 4" fill="none" marker-end="url(#arrow-data)"/>
+  <path d="M 379 940 L 379 1030" stroke="#10B981" stroke-width="2" fill="none" marker-end="url(#arrow-write)"/>
+  <path d="M 524 940 L 524 1030" stroke="#10B981" stroke-width="2" fill="none" marker-end="url(#arrow-write)"/>
+  
+
+
+  <!-- Backend PostgreSQL Stores -->
+  <g filter="url(#shadow)">
+    <rect x="952" y="1030" width="140" height="50" rx="8" fill="#0F172A" stroke="#475569"/>
+    <text x="1022" y="1060" text-anchor="middle" class="codePill">sync_operations</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="1102" y="1030" width="140" height="50" rx="8" fill="#0F172A" stroke="#475569"/>
+    <text x="1172" y="1060" text-anchor="middle" class="codePill">sync_state</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="1252" y="1030" width="140" height="50" rx="8" fill="#450A0A" stroke="#EF4444"/>
+    <text x="1322" y="1060" text-anchor="middle" class="codePill" fill="#FCA5A5">sync_conflicts</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="1402" y="1030" width="140" height="50" rx="8" fill="#0F172A" stroke="#475569"/>
+    <text x="1472" y="1060" text-anchor="middle" class="codePill">sync_changes</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="1552" y="1030" width="160" height="50" rx="8" fill="#0F172A" stroke="#475569"/>
+    <text x="1632" y="1060" text-anchor="middle" class="codePill">domain_entities</text>
+  </g>
+
+  <!-- Connect Backend Logic to Stores -->
+  <!-- SyncOperation writes (enters from LEFT side) -->
+  <path d="M 1432 330 L 1432 290 L 942 290 L 942 1055 L 952 1055" stroke="#10B981" stroke-width="2" stroke-dasharray="4 4" fill="none" marker-end="url(#arrow-write)"/>
+  <!-- SyncState writes (vertical, points DOWN into top) -->
+  <path d="M 1252 390 L 1162 390 L 1162 560 L 1172 560 L 1172 1030" stroke="#10B981" stroke-width="2" stroke-dasharray="4 4" fill="none" marker-end="url(#arrow-write)"/>
+  <!-- SyncChange reads (from sync_changes table) -->
+  <path d="M 1440 710 L 1440 1030" stroke="#38BDF8" stroke-width="2" fill="none" marker-start="url(#arrow-data)" />
+  
+  <!-- SyncEntityHandler (Atomic TX) writes to changes and entities -->
+  <path d="M 1472 490 L 1472 1030" stroke="#10B981" stroke-width="3" fill="none" marker-end="url(#arrow-write)"/>
+  <path d="M 1632 490 L 1632 1030" stroke="#10B981" stroke-width="3" fill="none" marker-end="url(#arrow-write)"/>
+
+
+  <!-- ========================================================= -->
+  <!-- ARROW LABELS (rendered last for readability over paths)    -->
+  <!-- ========================================================= -->
+
+  <!-- Push: PendingChangeItem[] -->
+  <rect x="494" y="426" width="146" height="22" rx="4" fill="#0F172A" stroke="#1E293B"/>
+  <text x="500" y="440" class="arrowLabel" fill="#38BDF8">PendingChangeItem[]</text>
+
+  <!-- Push: OK / Merged -->
+  <rect x="1340" y="426" width="84" height="22" rx="4" fill="#0F172A" stroke="#1E293B"/>
+  <text x="1382" y="440" class="arrowLabel" text-anchor="middle" fill="#34D399">OK / Merged</text>
+
+  <!-- Push: Version Mismatch -->
+  <rect x="1192" y="520" width="140" height="24" rx="12" fill="#450A0A" stroke="#EF4444"/>
+  <text x="1262" y="536" class="badge" text-anchor="middle">Version Mismatch</text>
+
+  <!-- Pull: ?cursor=Base64String -->
+  <rect x="494" y="646" width="156" height="22" rx="4" fill="#0F172A" stroke="#1E293B"/>
+  <text x="500" y="660" class="arrowLabel" fill="#38BDF8">?cursor=Base64String</text>
+
+  <!-- Pull: hasMore, nextCursor -->
+  <rect x="480" y="610" width="160" height="24" rx="12" fill="#0F172A" stroke="#38BDF8"/>
+  <text x="560" y="626" class="badge" text-anchor="middle" fill="#BAE6FD">hasMore, nextCursor</text>
+
+  <!-- Apply: Passes -->
+  <rect x="318" y="876" width="48" height="22" rx="4" fill="#0F172A" stroke="#1E293B"/>
+  <text x="342" y="890" class="arrowLabel" text-anchor="middle" fill="#34D399">Passes</text>
+
+  <!-- Data Stores: Atomic Commits -->
+  <rect x="1452" y="740" width="200" height="24" rx="12" fill="#064E3B" stroke="#10B981"/>
+  <text x="1552" y="756" class="badge" text-anchor="middle" fill="#6EE7B7">Atomic Commits</text>
+
+</svg>

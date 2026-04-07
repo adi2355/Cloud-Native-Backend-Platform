@@ -1,0 +1,377 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1250" viewBox="0 0 1800 1250" role="img" aria-labelledby="title desc">
+  <title id="title">Health Data Pipeline: Ingestion, Persistence &amp; Projections</title>
+  <desc id="desc">Accurate end-to-end health pipeline detailing queue routing, the single-transaction boundary, transactional outbox, and watermark-aware async projections.</desc>
+
+  <defs>
+    <!-- Background Gradients -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0B1220"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="col-os" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(30, 41, 59, 0.4)"/>
+      <stop offset="100%" stop-color="rgba(30, 41, 59, 0.1)"/>
+    </linearGradient>
+    <linearGradient id="col-app" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(30, 58, 138, 0.15)"/>
+      <stop offset="100%" stop-color="rgba(30, 58, 138, 0.05)"/>
+    </linearGradient>
+    <linearGradient id="col-write" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(88, 28, 135, 0.15)"/>
+      <stop offset="100%" stop-color="rgba(88, 28, 135, 0.05)"/>
+    </linearGradient>
+    <linearGradient id="col-read" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(15, 118, 110, 0.15)"/>
+      <stop offset="100%" stop-color="rgba(15, 118, 110, 0.05)"/>
+    </linearGradient>
+    <linearGradient id="tx-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(6, 78, 59, 0.3)"/>
+      <stop offset="100%" stop-color="rgba(2, 44, 34, 0.7)"/>
+    </linearGradient>
+
+    <!-- Markers -->
+    <marker id="arrow-data" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#38BDF8"/>
+    </marker>
+    <marker id="arrow-ctrl" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#F59E0B"/>
+    </marker>
+    <marker id="arrow-queue" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#10B981"/>
+    </marker>
+    <marker id="arrow-async" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#A78BFA"/>
+    </marker>
+    <marker id="arrow-read" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#2DD4BF"/>
+    </marker>
+
+    <!-- Filters -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+    <filter id="glow-tx" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#10B981" flood-opacity="0.3"/>
+    </filter>
+
+    <style>
+      .title { font: 700 30px Inter, sans-serif; fill: #F8FAFC; }
+      .subtitle { font: 400 16px Inter, sans-serif; fill: #94A3B8; }
+      .colHeader { font: 800 20px Inter, sans-serif; fill: #E2E8F0; letter-spacing: 0.02em; }
+      .cardTitle { font: 700 15px Inter, sans-serif; fill: #F8FAFC; }
+      .cardMeta { font: 400 13px Inter, sans-serif; fill: #94A3B8; }
+      .cardHighlight { font: 600 13px Inter, sans-serif; fill: #38BDF8; }
+      .codePill { font: 600 12px "JetBrains Mono", monospace; fill: #93C5FD; }
+      .diamondText { font: 600 13px Inter, sans-serif; fill: #F8FAFC; text-anchor: middle; }
+      .branchLabelYes { font: 600 12px Inter, sans-serif; fill: #10B981; }
+      .branchLabelNo { font: 600 12px Inter, sans-serif; fill: #F59E0B; }
+      .badge { font: 700 11px Inter, sans-serif; fill: #FFFFFF; text-transform: uppercase; letter-spacing: 0.05em; }
+    </style>
+  </defs>
+
+  <!-- Base Canvas -->
+  <rect width="1800" height="1250" rx="24" fill="url(#bg)"/>
+  <rect x="24" y="24" width="1752" height="1202" rx="20" fill="none" stroke="#1E293B" stroke-width="2"/>
+
+  <!-- Header -->
+  <text x="64" y="76" class="title">Health Data Pipeline: Ingestion, Persistence &amp; Projections</text>
+  <text x="64" y="104" class="subtitle">Complete structural flow: exact queue routing, strict transactional boundaries, and watermark-aware async projections.</text>
+
+  <!-- Legend -->
+  <rect x="1460" y="40" width="280" height="96" rx="12" fill="#0F172A" stroke="#334155" filter="url(#shadow)"/>
+  <text x="1480" y="64" class="cardTitle">Flow Legend</text>
+  <path d="M 1480 84 L 1520 84" stroke="#38BDF8" stroke-width="3" fill="none" marker-end="url(#arrow-data)"/>
+  <text x="1535" y="88" class="cardMeta" fill="#BAE6FD">Data / HTTP Request</text>
+  <path d="M 1480 108 L 1520 108" stroke="#F59E0B" stroke-width="3" fill="none" marker-end="url(#arrow-ctrl)"/>
+  <text x="1535" y="112" class="cardMeta" fill="#FDE68A">Control / Inline Execution</text>
+
+  <!-- ========================================================= -->
+  <!-- VERTICAL SWIMLANES                                        -->
+  <!-- ========================================================= -->
+  
+  <rect x="64" y="140" width="240" height="1060" rx="16" fill="url(#col-os)" stroke="#334155" stroke-width="2"/>
+  <text x="84" y="176" class="colHeader" fill="#94A3B8">1. Mobile OS</text>
+
+  <rect x="336" y="140" width="360" height="1060" rx="16" fill="url(#col-app)" stroke="#1D4ED8" stroke-width="2"/>
+  <text x="356" y="176" class="colHeader" fill="#93C5FD">2. Mobile App</text>
+  <text x="356" y="196" class="cardMeta" fill="#60A5FA">App-Side Processing</text>
+
+  <rect x="728" y="140" width="500" height="1060" rx="16" fill="url(#col-write)" stroke="#7C3AED" stroke-width="2"/>
+  <text x="748" y="176" class="colHeader" fill="#C4B5FD">3. Backend Write Path</text>
+  <text x="748" y="196" class="cardMeta" fill="#A855F7">Ingestion &amp; Tx Persistence</text>
+
+  <rect x="1260" y="140" width="476" height="1060" rx="16" fill="url(#col-read)" stroke="#0F766E" stroke-width="2"/>
+  <text x="1280" y="176" class="colHeader" fill="#5EEAD4">4. Backend Read Path</text>
+  <text x="1280" y="196" class="cardMeta" fill="#2DD4BF">Async Projections &amp; APIs</text>
+
+
+  <!-- ========================================================= -->
+  <!-- ROUTING PATHS (Drawn Back-to-Front)                       -->
+  <!-- ========================================================= -->
+
+  <!-- Col 1 to Col 2 -->
+  <path d="M 284 290 L 366 290" stroke="#38BDF8" stroke-width="2" fill="none" marker-end="url(#arrow-data)"/>
+  <path d="M 284 370 L 316 370 L 316 290 L 366 290" stroke="#38BDF8" stroke-width="2" fill="none" marker-end="url(#arrow-data)"/>
+
+  <!-- Col 2 Internal -->
+  <path d="M 516 320 L 516 350" stroke="#38BDF8" stroke-width="2" fill="none" marker-end="url(#arrow-data)"/>
+  <path d="M 516 460 L 516 480" stroke="#38BDF8" stroke-width="2" fill="none" marker-end="url(#arrow-data)"/>
+  <path d="M 516 560 L 516 590" stroke="#38BDF8" stroke-width="2" fill="none" marker-end="url(#arrow-data)"/>
+
+  <!-- Col 2 to Col 3 (Upload to API Gateway) -->
+  <path d="M 516 650 L 516 690 L 680 690 L 680 240 L 768 240" stroke="#38BDF8" stroke-width="3" fill="none" marker-end="url(#arrow-data)"/>
+
+  <!-- Col 3 Internal -->
+  <path d="M 918 270 L 918 300" stroke="#F59E0B" stroke-width="2" fill="none" marker-end="url(#arrow-ctrl)"/>
+  <path d="M 918 360 L 918 390" stroke="#F59E0B" stroke-width="2" fill="none" marker-end="url(#arrow-ctrl)"/>
+  <path d="M 918 450 L 918 462" stroke="#F59E0B" stroke-width="2" fill="none" marker-end="url(#arrow-ctrl)"/>
+
+  <!-- Routing Diamond Paths -->
+  <!-- Yes (Queue): Right → BullMQ → Worker → HealthSampleService -->
+  <path d="M 978 495 L 1053 495 L 1053 540" stroke="#10B981" stroke-width="3" fill="none" marker-end="url(#arrow-queue)"/>
+  <path d="M 1053 592 L 1053 608" stroke="#10B981" stroke-width="3" fill="none" marker-end="url(#arrow-queue)"/>
+  <path d="M 1053 636 L 1053 660" stroke="#10B981" stroke-width="3" stroke-dasharray="4 4" fill="none" marker-end="url(#arrow-queue)"/>
+  <!-- No (Inline): Left → Inline Card → HealthSampleService -->
+  <path d="M 858 495 L 808 495 L 808 545" stroke="#F59E0B" stroke-width="3" fill="none" marker-end="url(#arrow-ctrl)"/>
+  <path d="M 808 583 L 808 660" stroke="#F59E0B" stroke-width="3" fill="none" marker-end="url(#arrow-ctrl)"/>
+
+  <!-- Col 3 to Col 4 (Outbox -> Processor) -->
+  <path d="M 978 850 L 978 920 L 1240 920 L 1240 250 L 1318 250" stroke="#A78BFA" stroke-width="3" stroke-dasharray="6,4" fill="none" marker-end="url(#arrow-async)"/>
+  <rect x="999" y="928" width="220" height="20" rx="4" fill="#0B1220" fill-opacity="0.9"/>
+  <text x="1109" y="942" text-anchor="middle" fill="#C4B5FD" style="font: 500 11px Inter, sans-serif;">Async Polling (At-Least-Once)</text>
+
+  <!-- Watermark to Read Service (Freshness Check) -->
+  <path d="M 1123 850 L 1123 960 L 1270 960 L 1270 810 L 1318 810" stroke="#2DD4BF" stroke-width="3" stroke-dasharray="4,4" fill="none" marker-end="url(#arrow-read)"/>
+  <rect x="1097" y="972" width="200" height="20" rx="4" fill="#0B1220" fill-opacity="0.9"/>
+  <text x="1197" y="986" text-anchor="middle" fill="#5EEAD4" style="font: 500 11px Inter, sans-serif;">Watermark Freshness Check</text>
+
+  <!-- Col 4 Internal -->
+  <path d="M 1498 290 L 1498 320" stroke="#A78BFA" stroke-width="2" fill="none" marker-end="url(#arrow-async)"/>
+  <path d="M 1498 420 L 1498 450" stroke="#A78BFA" stroke-width="2" fill="none" marker-end="url(#arrow-async)"/>
+  <path d="M 1498 630 L 1498 660" stroke="#A78BFA" stroke-width="2" fill="none" marker-end="url(#arrow-async)"/>
+  <path d="M 1498 740 L 1498 770" stroke="#2DD4BF" stroke-width="2" fill="none" marker-end="url(#arrow-read)"/>
+  <path d="M 1498 850 L 1498 890" stroke="#2DD4BF" stroke-width="2" fill="none" marker-end="url(#arrow-read)"/>
+
+
+  <!-- ========================================================= -->
+  <!-- COLUMN 1: MOBILE OS                                       -->
+  <!-- ========================================================= -->
+  <g filter="url(#shadow)">
+    <rect x="84" y="260" width="200" height="60" rx="12" fill="#0F172A" stroke="#475569"/>
+  </g>
+  <rect x="94" y="270" width="4" height="40" rx="2" fill="#EF4444"/>
+  <text x="108" y="284" class="cardTitle">Apple HealthKit</text>
+  <text x="108" y="304" class="cardMeta">Background / UI</text>
+
+  <g filter="url(#shadow)">
+    <rect x="84" y="340" width="200" height="60" rx="12" fill="#0F172A" stroke="#475569"/>
+  </g>
+  <rect x="94" y="350" width="4" height="40" rx="2" fill="#3B82F6"/>
+  <text x="108" y="364" class="cardTitle">Health Connect</text>
+  <text x="108" y="384" class="cardMeta">Android OS SDK</text>
+
+
+  <!-- ========================================================= -->
+  <!-- COLUMN 2: MOBILE APP                                      -->
+  <!-- ========================================================= -->
+  
+  <!-- Wrapper Box -->
+  <rect x="346" y="210" width="340" height="460" rx="16" fill="rgba(15, 23, 42, 0.4)" stroke="#3B82F6" stroke-dasharray="6,4"/>
+  <text x="366" y="235" class="cardTitle" fill="#93C5FD">HealthSyncService (Orchestrator)</text>
+
+  <g filter="url(#shadow)">
+    <rect x="366" y="250" width="300" height="70" rx="12" fill="#0F172A" stroke="#3B82F6"/>
+  </g>
+  <rect x="376" y="260" width="4" height="50" rx="2" fill="#60A5FA"/>
+  <text x="390" y="274" class="cardTitle">NativeHealthIngestionDriver</text>
+  <text x="390" y="290" class="cardTitle">&amp; HealthIngestionEngine (TS)</text>
+  <text x="390" y="308" class="cardMeta">Hot/Cold/Change Lane routing</text>
+
+  <!-- Local SQLite (Atomic Commit) -->
+  <g filter="url(#shadow)">
+    <rect x="366" y="350" width="300" height="110" rx="12" fill="#064E3B" stroke="#10B981" filter="url(#glow-tx)"/>
+  </g>
+  <rect x="376" y="360" width="4" height="90" rx="2" fill="#34D399"/>
+  <text x="390" y="374" class="cardTitle">Local SQLite Operational Store</text>
+  <text x="390" y="394" class="cardMeta">Atomic native write boundary.</text>
+  
+  <rect x="390" y="410" width="96" height="24" rx="4" fill="#022C22" stroke="#059669"/>
+  <text x="438" y="426" text-anchor="middle" fill="#93C5FD" style="font: 600 10px 'JetBrains Mono', monospace;">health_samples</text>
+  <rect x="492" y="410" width="56" height="24" rx="4" fill="#022C22" stroke="#059669"/>
+  <text x="520" y="426" text-anchor="middle" fill="#93C5FD" style="font: 600 10px 'JetBrains Mono', monospace;">cursors</text>
+  <rect x="554" y="410" width="96" height="24" rx="4" fill="#022C22" stroke="#059669"/>
+  <text x="602" y="426" text-anchor="middle" fill="#93C5FD" style="font: 600 10px 'JetBrains Mono', monospace;">deletion_queue</text>
+
+  <!-- Upload Engine -->
+  <g filter="url(#shadow)">
+    <rect x="366" y="480" width="300" height="80" rx="12" fill="#0F172A" stroke="#475569"/>
+  </g>
+  <rect x="376" y="490" width="4" height="60" rx="2" fill="#A78BFA"/>
+  <text x="390" y="504" class="cardTitle">HealthUploadEngine</text>
+  <text x="390" y="524" class="cardMeta">Batches samples &amp; deletions</text>
+  <text x="390" y="544" class="cardMeta">Computes <tspan fill="#F87171" font-family="JetBrains Mono">payloadHash</tspan> for integrity</text>
+
+  <!-- HTTP Transport -->
+  <g filter="url(#shadow)">
+    <rect x="366" y="590" width="300" height="60" rx="12" fill="#0F172A" stroke="#475569"/>
+  </g>
+  <rect x="376" y="600" width="4" height="40" rx="2" fill="#F59E0B"/>
+  <text x="390" y="614" class="cardTitle">HealthUploadHttpClient</text>
+  <text x="390" y="634" class="cardMeta">HTTP Transport / GZIP compression</text>
+
+
+  <!-- ========================================================= -->
+  <!-- COLUMN 3: BACKEND WRITE PATH                              -->
+  <!-- ========================================================= -->
+  
+  <g filter="url(#shadow)">
+    <rect x="768" y="210" width="300" height="60" rx="12" fill="#0F172A" stroke="#475569"/>
+  </g>
+  <rect x="778" y="220" width="4" height="40" rx="2" fill="#3B82F6"/>
+  <text x="792" y="234" class="cardTitle">API Gateway / Middleware</text>
+  <text x="792" y="254" class="cardMeta">Auth, Zod Validation, Hash Check</text>
+
+  <g filter="url(#shadow)">
+    <rect x="768" y="300" width="300" height="60" rx="12" fill="#0F172A" stroke="#475569"/>
+  </g>
+  <rect x="778" y="310" width="4" height="40" rx="2" fill="#8B5CF6"/>
+  <text x="792" y="324" class="cardTitle">HealthController</text>
+  <text x="792" y="344" class="cardMeta">POST /health/samples/batch-upsert</text>
+
+  <g filter="url(#shadow)">
+    <rect x="768" y="390" width="300" height="60" rx="12" fill="#2E1065" stroke="#7C3AED"/>
+  </g>
+  <rect x="778" y="400" width="4" height="40" rx="2" fill="#C4B5FD"/>
+  <text x="792" y="414" class="cardTitle">HealthIngestQueueService</text>
+  <text x="792" y="434" class="cardMeta">Analyzes batch size &amp; routes request</text>
+
+  <!-- Routing Diamond (bigger) -->
+  <g filter="url(#shadow)">
+    <polygon points="918,462 978,495 918,528 858,495" fill="#1E293B" stroke="#64748B"/>
+  </g>
+  <text x="918" y="499" class="diamondText">Batch >= 400?</text>
+  <text x="990" y="488" class="branchLabelYes">Yes (Queued)</text>
+  <text x="770" y="488" class="branchLabelNo">No (Inline)</text>
+
+  <!-- No Path: Inline Execution Card (left) -->
+  <g filter="url(#shadow)">
+    <rect x="753" y="545" width="110" height="38" rx="10" fill="#0F172A" stroke="#F59E0B"/>
+  </g>
+  <text x="808" y="562" text-anchor="middle" fill="#F8FAFC" style="font: 700 11px Inter, sans-serif;">Inline Call</text>
+  <text x="808" y="577" text-anchor="middle" fill="#94A3B8" style="font: 400 10px Inter, sans-serif;">Returns 200</text>
+
+  <!-- Yes Path: BullMQ Redis Queue (right) -->
+  <g filter="url(#shadow)">
+    <rect x="968" y="540" width="170" height="52" rx="12" fill="#450A0A" stroke="#EF4444"/>
+  </g>
+  <rect x="978" y="548" width="4" height="36" rx="2" fill="#FCA5A5"/>
+  <text x="992" y="558" fill="#F8FAFC" style="font: 700 12px Inter, sans-serif;">BullMQ Redis Queue</text>
+  <text x="992" y="573" fill="#FCA5A5" style="font: 600 11px Inter, sans-serif;">HEALTH_INGEST_BATCH</text>
+  <text x="992" y="586" fill="#94A3B8" style="font: 400 10px Inter, sans-serif;">Returns 202 Accepted</text>
+
+  <!-- Yes Path: Worker Block (tiny, between BullMQ and HealthSampleService) -->
+  <g filter="url(#shadow)">
+    <rect x="1018" y="608" width="70" height="28" rx="8" fill="#1E293B" stroke="#10B981"/>
+  </g>
+  <text x="1053" y="626" text-anchor="middle" fill="#34D399" style="font: 700 12px Inter, sans-serif;">Worker</text>
+
+
+  <!-- ========================================================= -->
+  <!-- SINGLE DB TRANSACTION BOUNDARY                            -->
+  <!-- ========================================================= -->
+  <g filter="url(#glow-tx)">
+    <rect x="748" y="660" width="460" height="240" rx="16" fill="url(#tx-grad)" stroke="#10B981" stroke-width="3"/>
+  </g>
+  <text x="978" y="694" text-anchor="middle" fill="#34D399" style="font: 700 14px Inter, sans-serif;">HealthSampleService (Single DB Transaction)</text>
+  <text x="978" y="712" text-anchor="middle" fill="#A7F3D0" style="font: 400 9px Inter, sans-serif;">Guarantees raw persistence, outbox eventing, and watermark progression are fully atomic.</text>
+
+  <!-- Inner DB Repositories -->
+  <rect x="768" y="740" width="130" height="140" rx="12" fill="#022C22" stroke="#059669"/>
+  <text x="833" y="764" text-anchor="middle" class="cardTitle">Raw Data</text>
+  <text x="833" y="784" text-anchor="middle" fill="#94A3B8" style="font: 400 11px Inter, sans-serif;">HealthSampleRepo</text>
+  <rect x="773" y="800" width="120" height="24" rx="4" fill="#064E3B"/>
+  <text x="833" y="816" text-anchor="middle" fill="#93C5FD" style="font: 600 9px 'JetBrains Mono', monospace;">health_samples</text>
+  <text x="833" y="846" text-anchor="middle" fill="#94A3B8" style="font: 400 10px Inter, sans-serif;">UPSERT operation</text>
+  <text x="833" y="864" text-anchor="middle" fill="#94A3B8" style="font: 400 10px Inter, sans-serif;">Level-2 Idempotency</text>
+
+  <rect x="913" y="740" width="130" height="140" rx="12" fill="#2E1065" stroke="#7C3AED"/>
+  <text x="978" y="764" text-anchor="middle" class="cardTitle">Tx Outbox</text>
+  <text x="978" y="784" text-anchor="middle" fill="#94A3B8" style="font: 400 11px Inter, sans-serif;">OutboxService</text>
+  <rect x="918" y="800" width="120" height="24" rx="4" fill="#4C1D95"/>
+  <text x="978" y="816" text-anchor="middle" fill="#93C5FD" style="font: 600 9px 'JetBrains Mono', monospace;">outbox_events</text>
+  <text x="978" y="846" text-anchor="middle" fill="#C4B5FD" style="font: 600 10px Inter, sans-serif;">health.samples.changed</text>
+  <text x="978" y="864" text-anchor="middle" fill="#94A3B8" style="font: 400 10px Inter, sans-serif;">Durably queued</text>
+
+  <rect x="1058" y="740" width="130" height="140" rx="12" fill="#082F49" stroke="#0284C7"/>
+  <text x="1123" y="764" text-anchor="middle" class="cardTitle">Freshness</text>
+  <text x="1123" y="784" text-anchor="middle" fill="#94A3B8" style="font: 400 11px Inter, sans-serif;">WatermarkRepo</text>
+  <rect x="1063" y="800" width="120" height="24" rx="4" fill="#0C4A6E"/>
+  <text x="1123" y="816" text-anchor="middle" fill="#93C5FD" style="font: 600 9px 'JetBrains Mono', monospace;">user_health_watermarks</text>
+  <text x="1123" y="846" text-anchor="middle" fill="#7DD3FC" style="font: 600 10px Inter, sans-serif;">Sequence++</text>
+  <text x="1123" y="864" text-anchor="middle" fill="#94A3B8" style="font: 400 10px Inter, sans-serif;">minRequiredSeq</text>
+
+
+  <!-- ========================================================= -->
+  <!-- COLUMN 4: BACKEND READ PATH (PROJECTIONS)                 -->
+  <!-- ========================================================= -->
+
+  <g filter="url(#shadow)">
+    <rect x="1318" y="210" width="360" height="80" rx="12" fill="#2E1065" stroke="#7C3AED"/>
+  </g>
+  <rect x="1328" y="220" width="4" height="60" rx="2" fill="#A855F7"/>
+  <text x="1342" y="234" class="cardTitle">OutboxProcessorService</text>
+  <text x="1342" y="254" class="cardMeta">Polls <tspan font-family="JetBrains Mono" fill="#93C5FD">PENDING</tspan> outbox events.</text>
+  <text x="1342" y="274" class="cardMeta">Coalesces multiple user events into one payload.</text>
+
+  <g filter="url(#shadow)">
+    <rect x="1318" y="320" width="360" height="100" rx="12" fill="#0F172A" stroke="#475569"/>
+  </g>
+  <rect x="1328" y="330" width="4" height="80" rx="2" fill="#3B82F6"/>
+  <text x="1342" y="344" class="cardTitle">HealthProjectionCoordinatorService</text>
+  <text x="1342" y="364" class="cardMeta">Orchestrates fanout to projection handlers.</text>
+  <text x="1342" y="384" class="cardMeta">Tracks <tspan font-family="JetBrains Mono" fill="#93C5FD">ProjectionCheckpoint</tspan> state per handler.</text>
+  <text x="1342" y="404" class="cardMeta">Applies lease-based concurrency locks.</text>
+
+  <!-- Projection Handlers Box -->
+  <rect x="1318" y="450" width="360" height="180" rx="12" fill="rgba(30, 58, 138, 0.2)" stroke="#3B82F6" stroke-dasharray="4,4"/>
+  <text x="1338" y="480" class="colHeader" fill="#93C5FD">Projection Handlers</text>
+  <rect x="1338" y="500" width="150" height="26" rx="4" fill="#0F172A" stroke="#1D4ED8"/>
+  <text x="1413" y="518" text-anchor="middle" class="cardMeta">RollupProjection</text>
+  <rect x="1508" y="500" width="150" height="26" rx="4" fill="#0F172A" stroke="#1D4ED8"/>
+  <text x="1583" y="518" text-anchor="middle" class="cardMeta">SleepSummary</text>
+  <rect x="1338" y="536" width="150" height="26" rx="4" fill="#0F172A" stroke="#1D4ED8"/>
+  <text x="1413" y="554" text-anchor="middle" class="cardMeta">SessionImpact</text>
+  <rect x="1508" y="536" width="150" height="26" rx="4" fill="#0F172A" stroke="#1D4ED8"/>
+  <text x="1583" y="554" text-anchor="middle" class="cardMeta">ProductImpact</text>
+  <rect x="1338" y="572" width="320" height="26" rx="4" fill="#0F172A" stroke="#1D4ED8"/>
+  <text x="1498" y="590" text-anchor="middle" class="cardMeta">TelemetryCache (Updates STALE state)</text>
+  <text x="1498" y="618" text-anchor="middle" class="cardHighlight">Value-kind aware, idempotent, pure transformations</text>
+
+  <!-- Read Models -->
+  <g filter="url(#shadow)">
+    <rect x="1318" y="660" width="360" height="80" rx="12" fill="#022C22" stroke="#059669"/>
+  </g>
+  <rect x="1328" y="670" width="4" height="60" rx="2" fill="#34D399"/>
+  <text x="1342" y="684" class="cardTitle">Projection Read Models (Tables)</text>
+  <text x="1342" y="704" class="cardMeta">UserHealthRollupDay, UserSleepNightSummary, etc.</text>
+  <text x="1342" y="724" class="cardHighlight">Tags computed rows with sourceWatermark</text>
+
+  <!-- Read Service -->
+  <g filter="url(#shadow)">
+    <rect x="1318" y="770" width="360" height="80" rx="12" fill="#082F49" stroke="#0284C7"/>
+  </g>
+  <rect x="1328" y="780" width="4" height="60" rx="2" fill="#38BDF8"/>
+  <text x="1342" y="794" class="cardTitle">HealthProjectionReadService</text>
+  <text x="1342" y="814" class="cardMeta">Serves REST APIs. Applies freshness override:</text>
+  <text x="1342" y="834" class="cardHighlight" fill="#38BDF8">If currentWatermark > sourceWatermark -> STALE</text>
+
+  <!-- Insights -->
+  <g filter="url(#shadow)">
+    <rect x="1318" y="890" width="360" height="80" rx="12" fill="#0F172A" stroke="#475569"/>
+  </g>
+  <rect x="1328" y="900" width="4" height="60" rx="2" fill="#F59E0B"/>
+  <text x="1342" y="914" class="cardTitle">HealthInsightEngineService</text>
+  <text x="1342" y="934" class="cardMeta">Read-time deterministic rule evaluation</text>
+  <text x="1342" y="954" class="cardMeta">Combines rollups + impacts -> InsightDto</text>
+
+</svg>

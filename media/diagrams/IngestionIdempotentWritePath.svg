@@ -1,0 +1,392 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1200" viewBox="0 0 1600 1200" role="img" aria-labelledby="title desc">
+  <title id="title">End-to-End Health Ingest Write Path</title>
+  <desc id="desc">Strict request-level idempotency, throughput routing, and atomic sample-level write semantics.</desc>
+
+  <defs>
+    <!-- Backgrounds -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0B1220"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="panelGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+
+    <!-- Atomic Transaction Glow Gradient -->
+    <linearGradient id="commitGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#064E3B"/>
+      <stop offset="100%" stop-color="#022C22"/>
+    </linearGradient>
+
+    <!-- Markers -->
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#94A3B8"/>
+    </marker>
+    <marker id="arrow-error" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#EF4444"/>
+    </marker>
+    <marker id="arrow-success" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#10B981"/>
+    </marker>
+    <marker id="arrow-async" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#A78BFA"/>
+    </marker>
+    <marker id="arrow-warning" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,1 L10,6 L0,11 Z" fill="#F59E0B"/>
+    </marker>
+
+    <!-- Filters -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#2DD4BF" flood-opacity="0.25"/>
+    </filter>
+    <filter id="glow-error" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#EF4444" flood-opacity="0.4"/>
+    </filter>
+
+    <style>
+      .title { font: 700 28px Inter, -apple-system, sans-serif; fill: #F8FAFC; }
+      .subtitle { font: 400 15px Inter, -apple-system, sans-serif; fill: #94A3B8; }
+      .colHeader { font: 700 18px Inter, -apple-system, sans-serif; fill: #E2E8F0; }
+      .cardTitle { font: 700 14px Inter, -apple-system, sans-serif; fill: #F8FAFC; }
+      .cardMeta { font: 400 12px Inter, -apple-system, sans-serif; fill: #CBD5E1; }
+      .codeLabel { font: 600 12px "JetBrains Mono", monospace; fill: #38BDF8; }
+      .pathText { font: 600 12px Inter, -apple-system, sans-serif; fill: #E2E8F0; text-anchor: middle; }
+      .legendTitle { font: 700 14px Inter, -apple-system, sans-serif; fill: #F8FAFC; }
+      .legendText { font: 500 12px Inter, -apple-system, sans-serif; fill: #94A3B8; }
+    </style>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="1600" height="1200" rx="24" fill="url(#bg)"/>
+  <rect x="32" y="32" width="1536" height="1136" rx="20" fill="none" stroke="#1E293B" stroke-width="2"/>
+
+  <!-- Headers -->
+  <text x="64" y="80" class="title">End-to-End Health Ingest Write Path</text>
+  <text x="64" y="106" class="subtitle">Strict request-level idempotency, throughput routing, and atomic sample-level write semantics.</text>
+
+  <!-- Legend -->
+  <rect x="1300" y="46" width="240" height="84" rx="12" fill="#0F172A" stroke="#334155" filter="url(#shadow)"/>
+  <text x="1320" y="70" class="legendTitle">Flow Legend</text>
+  <path d="M 1320 90 L 1350 90" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <text x="1365" y="94" class="legendText">Standard Execution</text>
+  <path d="M 1320 110 L 1350 110" stroke="#EF4444" stroke-width="2" fill="none" marker-end="url(#arrow-error)"/>
+  <text x="1365" y="114" class="legendText">Rejection / Error</text>
+
+  <!-- ========================================================= -->
+  <!-- SWIMLANE BACKGROUNDS & HEADERS                            -->
+  <!-- ========================================================= -->
+
+  <!-- Col 1: Trust Boundary -->
+  <rect x="64" y="150" width="250" height="1000" rx="16" fill="rgba(30, 41, 59, 0.4)" stroke="#334155"/>
+  <text x="84" y="186" class="colHeader">1. Trust Boundary</text>
+
+  <!-- Col 2: Throughput Router -->
+  <rect x="334" y="150" width="240" height="1000" rx="16" fill="rgba(30, 58, 138, 0.15)" stroke="#1D4ED8"/>
+  <text x="354" y="186" class="colHeader">2. Throughput Router</text>
+
+  <!-- Col 3: Idempotency Ledger -->
+  <rect x="594" y="150" width="320" height="1000" rx="16" fill="rgba(76, 29, 149, 0.15)" stroke="#7C3AED"/>
+  <text x="614" y="186" class="colHeader">3. Idempotency Ledger</text>
+
+  <!-- Col 4: Atomic Mutation -->
+  <rect x="934" y="150" width="320" height="1000" rx="16" fill="rgba(17, 94, 89, 0.15)" stroke="#0F766E"/>
+  <text x="954" y="186" class="colHeader">4. Atomic Mutation</text>
+
+  <!-- Col 5: Outputs & Downstream -->
+  <rect x="1274" y="150" width="260" height="1000" rx="16" fill="rgba(15, 23, 42, 0.4)" stroke="#475569"/>
+  <text x="1294" y="186" class="colHeader">5. Outputs &amp; Handoff</text>
+
+  <!-- ========================================================= -->
+  <!-- CONNECTIONS (Drawn before cards so they sit underneath)   -->
+  <!-- ========================================================= -->
+
+  <!-- Col 1 Paths -->
+  <path d="M 189 260 L 189 290" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <path d="M 189 350 L 189 380" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <path d="M 189 440 L 189 470" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Col 1 to Col 5 (Hash Mismatch Error) -->
+  <path d="M 294 410 L 1294 410" stroke="#EF4444" stroke-width="2" fill="none" marker-end="url(#arrow-error)"/>
+  <rect x="734" y="400" width="100" height="20" rx="10" fill="#1E293B" stroke="#475569"/>
+  <text x="784" y="414" class="pathText">Invalid Hash</text>
+
+  <!-- Col 1 to Col 2 -->
+  <path d="M 294 500 L 354 500" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Col 2 Paths -->
+  <path d="M 454 530 L 454 560" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <rect x="424" y="535" width="60" height="20" rx="10" fill="#1E293B" stroke="#1D4ED8"/>
+  <text x="454" y="549" class="pathText">≥ 400</text>
+
+  <path d="M 454 620 L 454 650" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Col 2 to Col 5 (202 Accepted) — stray stub removed, straight vertical from Queue right edge -->
+  <path d="M 554 590 L 554 545 L 1278 545 L 1278 590 L 1294 590" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <rect x="854" y="535" width="80" height="20" rx="10" fill="#1E293B" stroke="#1D4ED8"/>
+  <text x="894" y="549" class="pathText">Return 202</text>
+
+  <!-- Col 2 to Col 3 (Inline) -->
+  <path d="M 554 500 L 584 500 L 584 590 L 599 590" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <!-- "< 400 (Inline)" label moved to overlay section for correct z-order -->
+
+  <!-- Col 2 to Col 3 (Worker) -->
+  <path d="M 554 680 L 584 680 L 584 590 L 599 590" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Col 3 Paths (all x-coordinates shifted -35px to center cards in purple column) -->
+  <path d="M 739 560 L 739 530" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <rect x="679" y="535" width="120" height="20" rx="10" fill="#1E293B" stroke="#7C3AED"/>
+  <text x="739" y="549" class="pathText">Completed / Partial</text>
+
+  <path d="M 739 620 L 739 650" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <rect x="704" y="625" width="70" height="20" rx="10" fill="#1E293B" stroke="#7C3AED"/>
+  <text x="739" y="639" class="pathText">Processing</text>
+
+  <path d="M 699 620 L 699 710 L 674 710 L 674 740" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <rect x="649" y="685" width="60" height="20" rx="10" fill="#1E293B" stroke="#7C3AED"/>
+  <text x="679" y="699" class="pathText">No Row</text>
+
+  <path d="M 779 620 L 779 710 L 824 710 L 824 740" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <rect x="769" y="685" width="110" height="20" rx="10" fill="#1E293B" stroke="#7C3AED"/>
+  <text x="824" y="699" class="pathText">Failed (P2002)</text>
+
+  <path d="M 824 710 L 824 740" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <!-- "Is Stale?" label moved to overlay section for correct z-order -->
+
+  <!-- Col 3 to Col 5 -->
+  <!-- Cached Success -->
+  <path d="M 889 500 L 1294 500" stroke="#10B981" stroke-width="2" fill="none" marker-end="url(#arrow-success)"/>
+  <rect x="1054" y="490" width="90" height="20" rx="10" fill="#1E293B" stroke="#10B981"/>
+  <text x="1099" y="504" class="pathText" fill="#10B981">Hash Matches</text>
+
+  <!-- Cached Mismatch -->
+  <path d="M 889 485 C 955 485, 955 410, 1294 410" stroke="#EF4444" stroke-width="2" fill="none" marker-end="url(#arrow-error)"/>
+  <rect x="1044" y="435" width="110" height="20" rx="10" fill="#1E293B" stroke="#EF4444"/>
+  <text x="1099" y="449" class="pathText" fill="#EF4444">Hash Mismatch</text>
+
+  <!-- Still Processing Conflict -->
+  <path d="M 889 680 L 1294 680" stroke="#F59E0B" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <rect x="1054" y="670" width="90" height="20" rx="10" fill="#1E293B" stroke="#F59E0B"/>
+  <text x="1099" y="684" class="pathText" fill="#F59E0B">Not Stale</text>
+
+  <!-- Col 3 to Col 4 -->
+  <path d="M 674 800 L 674 820 L 964 820" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <path d="M 824 800 L 824 820 L 964 820" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <rect x="719" y="810" width="140" height="20" rx="10" fill="#1E293B" stroke="#0F766E"/>
+  <text x="789" y="824" class="pathText">Proceed to Mutation</text>
+
+  <!-- Col 4 Internal -->
+  <path d="M 1114 840 L 1114 860" stroke="#2DD4BF" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <path d="M 1114 910 L 1114 930" stroke="#2DD4BF" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <path d="M 1114 980 L 1114 1000" stroke="#2DD4BF" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <path d="M 1114 1050 L 1114 1070" stroke="#2DD4BF" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Col 4 to Col 5 -->
+  <path d="M 1234 955 L 1294 955" stroke="#10B981" stroke-width="2" fill="none" marker-end="url(#arrow-success)"/>
+  <path d="M 1234 1095 L 1294 1095" stroke="#A78BFA" stroke-width="2" fill="none" marker-end="url(#arrow-async)"/>
+
+
+  <!-- ========================================================= -->
+  <!-- COL 1: TRUST BOUNDARY CARDS                               -->
+  <!-- ========================================================= -->
+  <g filter="url(#shadow)">
+    <rect x="84" y="200" width="210" height="60" rx="12" fill="#0F172A" stroke="#3B82F6"/>
+  </g>
+  <rect x="94" y="210" width="4" height="40" rx="2" fill="#3B82F6"/>
+  <text x="108" y="224" class="cardTitle">Client POST</text>
+  <text x="108" y="244" class="cardMeta">/health/samples/batch-upsert</text>
+
+  <g filter="url(#shadow)">
+    <rect x="84" y="290" width="210" height="60" rx="12" fill="#0F172A" stroke="#3B82F6"/>
+  </g>
+  <rect x="94" y="300" width="4" height="40" rx="2" fill="#3B82F6"/>
+  <text x="108" y="314" class="cardTitle">Schema Validation</text>
+  <text x="108" y="334" class="cardMeta">Zod strict payload validation</text>
+
+  <g filter="url(#shadow)">
+    <rect x="84" y="380" width="210" height="60" rx="12" fill="#0F172A" stroke="#3B82F6"/>
+  </g>
+  <rect x="94" y="390" width="4" height="40" rx="2" fill="#3B82F6"/>
+  <text x="108" y="404" class="cardTitle">Payload Hash Check</text>
+  <text x="108" y="424" class="cardMeta">Verify SHA-256 canonical hash</text>
+
+  <g filter="url(#shadow)">
+    <rect x="84" y="470" width="210" height="60" rx="12" fill="#0F172A" stroke="#3B82F6"/>
+  </g>
+  <rect x="94" y="480" width="4" height="40" rx="2" fill="#3B82F6"/>
+  <text x="108" y="494" class="cardTitle">Privacy Gating</text>
+  <text x="108" y="514" class="cardMeta">Check blocked metrics &amp; rules</text>
+
+  <!-- ========================================================= -->
+  <!-- COL 2: THROUGHPUT ROUTER CARDS                            -->
+  <!-- ========================================================= -->
+  <g filter="url(#shadow)">
+    <rect x="354" y="470" width="200" height="60" rx="12" fill="#0F172A" stroke="#F97316"/>
+  </g>
+  <rect x="364" y="480" width="4" height="40" rx="2" fill="#F97316"/>
+  <text x="378" y="494" class="cardTitle">Batch Size Threshold</text>
+  <text x="378" y="514" class="cardMeta">Route based on sample count</text>
+
+  <g filter="url(#shadow)">
+    <rect x="354" y="560" width="200" height="60" rx="12" fill="#0F172A" stroke="#F97316"/>
+  </g>
+  <rect x="364" y="570" width="4" height="40" rx="2" fill="#F97316"/>
+  <text x="378" y="584" class="cardTitle">Queue (BullMQ)</text>
+  <text x="378" y="604" class="cardMeta">Enqueue JobNames.HEALTH</text>
+
+  <g filter="url(#shadow)">
+    <rect x="354" y="650" width="200" height="60" rx="12" fill="#0F172A" stroke="#F97316"/>
+  </g>
+  <rect x="364" y="660" width="4" height="40" rx="2" fill="#F97316"/>
+  <text x="378" y="674" class="cardTitle">Async Worker</text>
+  <text x="378" y="694" class="cardMeta">Dequeue &amp; process payload</text>
+
+
+  <!-- ========================================================= -->
+  <!-- COL 3: IDEMPOTENCY LEDGER CARDS (shifted -35px to center) -->
+  <!-- ========================================================= -->
+  <g filter="url(#shadow)">
+    <rect x="619" y="560" width="240" height="60" rx="12" fill="#0F172A" stroke="#8B5CF6"/>
+  </g>
+  <rect x="629" y="570" width="4" height="40" rx="2" fill="#8B5CF6"/>
+  <text x="643" y="584" class="cardTitle">Lookup Request Record</text>
+  <text x="643" y="604" class="codeLabel">WHERE userId, requestId</text>
+
+  <g filter="url(#shadow)">
+    <rect x="619" y="470" width="270" height="60" rx="12" fill="#0F172A" stroke="#8B5CF6"/>
+  </g>
+  <rect x="629" y="480" width="4" height="40" rx="2" fill="#8B5CF6"/>
+  <text x="643" y="494" class="cardTitle">Verify Cached Hash</text>
+  <text x="643" y="514" class="cardMeta">Does payloadHash match record?</text>
+
+  <g filter="url(#shadow)">
+    <rect x="619" y="650" width="270" height="60" rx="12" fill="#0F172A" stroke="#8B5CF6"/>
+  </g>
+  <rect x="629" y="660" width="4" height="40" rx="2" fill="#8B5CF6"/>
+  <text x="643" y="674" class="cardTitle">Stale Processing Check</text>
+  <text x="643" y="694" class="cardMeta">Was lock abandoned by worker?</text>
+
+  <g filter="url(#shadow)">
+    <rect x="599" y="740" width="150" height="60" rx="12" fill="#0F172A" stroke="#8B5CF6"/>
+  </g>
+  <rect x="609" y="750" width="4" height="40" rx="2" fill="#8B5CF6"/>
+  <text x="623" y="764" class="cardTitle">Insert New</text>
+  <text x="623" y="784" class="cardMeta">Status = processing</text>
+
+  <g filter="url(#shadow)">
+    <rect x="759" y="740" width="150" height="60" rx="12" fill="#0F172A" stroke="#8B5CF6"/>
+  </g>
+  <rect x="769" y="750" width="4" height="40" rx="2" fill="#8B5CF6"/>
+  <text x="783" y="764" class="cardTitle">Reactivate</text>
+  <text x="783" y="784" class="cardMeta">failed -> processing</text>
+
+
+  <!-- ========================================================= -->
+  <!-- COL 4: ATOMIC DB TRANSACTION                              -->
+  <!-- ========================================================= -->
+  <g filter="url(#glow)">
+    <rect x="954" y="740" width="280" height="400" rx="16" fill="url(#commitGrad)" stroke="#2DD4BF" stroke-width="3"/>
+  </g>
+  <text x="1094" y="775" class="colHeader" text-anchor="middle" fill="#2DD4BF">Atomic DB Transaction ($tx)</text>
+
+  <g filter="url(#shadow)">
+    <rect x="974" y="790" width="240" height="50" rx="10" fill="#022C22" stroke="#059669"/>
+  </g>
+  <text x="1094" y="810" text-anchor="middle" class="cardTitle">Sample UPSERT</text>
+  <text x="1094" y="828" text-anchor="middle" class="codeLabel">ON CONFLICT DO UPDATE</text>
+
+  <g filter="url(#shadow)">
+    <rect x="974" y="860" width="240" height="50" rx="10" fill="#022C22" stroke="#059669"/>
+  </g>
+  <text x="1094" y="880" text-anchor="middle" class="cardTitle">Deletion Processing</text>
+  <text x="1094" y="898" text-anchor="middle" class="cardMeta" fill="#6EE7B7">Soft-delete marked items</text>
+
+  <g filter="url(#shadow)">
+    <rect x="974" y="930" width="240" height="50" rx="10" fill="#022C22" stroke="#059669"/>
+  </g>
+  <text x="1094" y="950" text-anchor="middle" class="cardTitle">Complete Request</text>
+  <text x="1094" y="968" text-anchor="middle" class="cardMeta" fill="#6EE7B7">Status = completed, cache JSON</text>
+
+  <g filter="url(#shadow)">
+    <rect x="974" y="1000" width="240" height="50" rx="10" fill="#022C22" stroke="#059669"/>
+  </g>
+  <text x="1094" y="1020" text-anchor="middle" class="cardTitle">Watermark Bump</text>
+  <text x="1094" y="1038" text-anchor="middle" class="codeLabel">sequenceNumber++</text>
+
+  <g filter="url(#shadow)">
+    <rect x="974" y="1070" width="240" height="50" rx="10" fill="#022C22" stroke="#059669"/>
+  </g>
+  <text x="1094" y="1090" text-anchor="middle" class="cardTitle">Transactional Outbox</text>
+  <text x="1094" y="1108" text-anchor="middle" class="codeLabel">health.samples.changed</text>
+
+
+  <!-- ========================================================= -->
+  <!-- COL 5: OUTPUTS & DOWNSTREAM CARDS                         -->
+  <!-- ========================================================= -->
+  <g filter="url(#glow-error)">
+    <rect x="1294" y="380" width="210" height="60" rx="12" fill="#450A0A" stroke="#EF4444"/>
+  </g>
+  <rect x="1304" y="390" width="4" height="40" rx="2" fill="#EF4444"/>
+  <text x="1318" y="404" class="cardTitle" fill="#FCA5A5">400 PAYLOAD_MISMATCH</text>
+  <text x="1318" y="424" class="cardMeta" fill="#FECACA">Tampering or client bug</text>
+
+  <g filter="url(#shadow)">
+    <rect x="1294" y="470" width="210" height="60" rx="12" fill="#064E3B" stroke="#10B981"/>
+  </g>
+  <rect x="1304" y="480" width="4" height="40" rx="2" fill="#10B981"/>
+  <text x="1318" y="494" class="cardTitle" fill="#A7F3D0">200 / 207 CACHED</text>
+  <text x="1318" y="514" class="cardMeta" fill="#D1FAE5">Idempotent replay success</text>
+
+  <g filter="url(#shadow)">
+    <rect x="1294" y="560" width="210" height="60" rx="12" fill="#082F49" stroke="#38BDF8"/>
+  </g>
+  <rect x="1304" y="570" width="4" height="40" rx="2" fill="#38BDF8"/>
+  <text x="1318" y="584" class="cardTitle" fill="#BAE6FD">202 ACCEPTED</text>
+  <text x="1318" y="604" class="cardMeta" fill="#E0F2FE">Large batch queued safely</text>
+
+  <g filter="url(#shadow)">
+    <rect x="1294" y="650" width="210" height="60" rx="12" fill="#78350F" stroke="#F59E0B"/>
+  </g>
+  <rect x="1304" y="660" width="4" height="40" rx="2" fill="#F59E0B"/>
+  <text x="1318" y="674" class="cardTitle" fill="#FDE68A">409 STILL_PROCESSING</text>
+  <text x="1318" y="694" class="cardMeta" fill="#FEF3C7">Concurrent duplicate blocked</text>
+
+  <g filter="url(#shadow)">
+    <rect x="1294" y="925" width="210" height="60" rx="12" fill="#064E3B" stroke="#10B981"/>
+  </g>
+  <rect x="1304" y="935" width="4" height="40" rx="2" fill="#10B981"/>
+  <text x="1318" y="949" class="cardTitle" fill="#A7F3D0">200 / 207 SUCCESS</text>
+  <text x="1318" y="969" class="cardMeta" fill="#D1FAE5">New data ingested &amp; saved</text>
+
+  <g filter="url(#shadow)">
+    <rect x="1294" y="1065" width="210" height="60" rx="12" fill="#2E1065" stroke="#A78BFA"/>
+  </g>
+  <rect x="1304" y="1075" width="4" height="40" rx="2" fill="#A78BFA"/>
+  <text x="1318" y="1089" class="cardTitle" fill="#DDD6FE">Projection Pipeline</text>
+  <text x="1318" y="1109" class="cardMeta" fill="#EDE9FE">Outbox processor fan-out</text>
+
+  <!-- ========================================================= -->
+  <!-- OVERLAY LABELS (after cards for correct SVG z-order)      -->
+  <!-- ========================================================= -->
+
+  <!-- "< 400 (Inline)" — positioned in gap between card rows, on the vertical arrow segment -->
+  <rect x="550" y="535" width="110" height="20" rx="10" fill="#1E293B" stroke="#1D4ED8"/>
+  <text x="605" y="549" class="pathText">&lt; 400 (Inline)</text>
+
+  <!-- "Is Stale?" — positioned below Stale Processing Check card (y=710) and above Reactivate (y=740) -->
+  <rect x="827" y="714" width="72" height="20" rx="10" fill="#1E293B" stroke="#7C3AED"/>
+  <text x="863" y="728" class="pathText">Is Stale?</text>
+
+  <!-- Arrow connectors to Col 5 output cards (overlay so arrowheads render on top of cards) -->
+  <!-- Red → 400 PAYLOAD_MISMATCH -->
+  <path d="M 1280 410 L 1296 410" stroke="#EF4444" stroke-width="2" fill="none" marker-end="url(#arrow-error)"/>
+  <!-- Green → 200/207 CACHED -->
+  <path d="M 1280 500 L 1296 500" stroke="#10B981" stroke-width="2" fill="none" marker-end="url(#arrow-success)"/>
+  <!-- Yellow → 409 STILL_PROCESSING -->
+  <path d="M 1280 680 L 1296 680" stroke="#F59E0B" stroke-width="2" fill="none" marker-end="url(#arrow-warning)"/>
+
+</svg>
