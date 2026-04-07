@@ -504,7 +504,7 @@ erDiagram
 
 ---
 
-<details>
+
 <summary><h2>Folder Structure</h2></summary>
 <br>
 
@@ -664,7 +664,7 @@ media/
 └── MERMAID/                        # Mermaid-rendered diagrams
 ```
 
-</details>
+
 
 
 ---
