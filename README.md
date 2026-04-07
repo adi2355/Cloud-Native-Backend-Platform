@@ -548,58 +548,6 @@ docs/
 
 </details>
 
----
-
-<details>
-<summary><h2>Getting Started</h2></summary>
-<br>
-
-```bash
-# Clone
-git clone https://github.com/adi2355/cloud-native-backend-platform.git
-cd cloud-native-backend-platform
-
-# Install
-npm install
-
-# Configure
-cp .env.example .env
-# Populate DATABASE_URL, REDIS_URL, COGNITO_USER_POOL_ID, JWT_SECRET
-
-# Database
-npx prisma migrate deploy
-
-# Run
-npm run dev          # Development with hot-reload
-npm run start:worker # BullMQ background worker
-```
-
-</details>
-
----
-
-<details>
-<summary><h2>Testing Strategy</h2></summary>
-<br>
-
-| Type | Tool | Scope |
-| :--- | :--- | :--- |
-| **Unit** | Jest + ts-jest | Services, repositories, pure functions |
-| **Integration** | Jest + Prisma test client | API routes, database operations, event flows |
-| **E2E** | Jest + supertest | Full API lifecycle (auth -> CRUD -> sync -> health) |
-| **Security** | Custom security test suite | Auth bypass, rate limiting, injection |
-| **WebSocket** | Jest + socket.io-client | Real-time event delivery, authentication |
-| **Load** | k6 | API throughput, latency percentiles, concurrent sync |
-
-```bash
-npm run test:unit          # Parallel unit tests
-npm run test:integration   # Serial integration tests
-npm run test:e2e           # End-to-end tests
-npm run test:security      # Security test suite
-npm run test:coverage      # Full coverage report
-```
-
-</details>
 
 ---
 
