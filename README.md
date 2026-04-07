@@ -510,40 +510,158 @@ erDiagram
 
 ```
 src/
+├── index.ts                        # Application entry point
+├── app.ts                          # Express application setup
+├── server.ts                       # HTTP server lifecycle management
+├── bootstrap.ts                    # Pure DI composition root (single wiring point)
+├── worker.ts                       # BullMQ worker process entry point
+├── instrumentation.ts              # OpenTelemetry tracing setup
+│
 ├── api/v1/
-│   ├── controllers/        # Request handling (health, sync, ai, consumption, ...)
-│   ├── middleware/          # Auth, caching, rate limiting, correlation, validation
-│   ├── routes/             # Express route definitions
-│   └── schemas/            # Zod validation schemas
-├── bootstrap.ts            # Pure DI composition root
-├── app.ts                  # Express application setup
-├── server.ts               # HTTP server management
-├── worker.ts               # BullMQ worker entry point
-├── core/                   # DI infrastructure (controller/route/middleware registry)
-├── events/                 # Domain event definitions & DomainEventService
-├── jobs/                   # BullMQ job definitions, processor, schedules
-├── repositories/           # Prisma-based data access layer
-├── services/               # Core business logic
-│   ├── sync/handlers/      # Entity-specific sync handlers
-│   └── ...                 # Domain services (health, ai, inventory, safety, ...)
-├── subscribers/            # Domain event handlers (analytics, goals, telemetry, ...)
-└── utils/                  # Error handling, auth, crypto, retry utilities
+│   ├── controllers/                # Request handlers
+│   │   ├── health.controller.ts        # Health ingestion + projection reads
+│   │   ├── sync.controller.ts          # Bidirectional sync orchestration
+│   │   ├── session.controller.ts       # Session lifecycle + telemetry
+│   │   ├── device.controller.ts        # BLE device management
+│   │   ├── telemetry.controller.ts     # Device telemetry ingestion
+│   │   ├── user.controller.ts          # User profile CRUD
+│   │   └── websocket.controller.ts     # WebSocket event handling
+│   ├── middleware/                  # 22 middleware modules
+│   │   ├── auth.middleware.ts          # Cognito JWT verification + user ID mapping
+│   │   ├── apiCache.middleware.ts      # Response caching with race-condition protection
+│   │   ├── apiGateway.middleware.ts    # External API circuit breaker + retry
+│   │   ├── rateLimitQueue.middleware.ts # Token-bucket rate limiting
+│   │   ├── sync-lease.middleware.ts    # Distributed sync admission control
+│   │   ├── correlationContext.middleware.ts # Request correlation tracking
+│   │   ├── error.middleware.ts         # Centralized error handling
+│   │   └── ...                         # Security, logging, validation, HTTPS enforcement
+│   ├── routes/                     # Express route definitions
+│   │   ├── health.routes.ts            # /health/* endpoints
+│   │   ├── sync.routes.ts             # /sync/* endpoints
+│   │   ├── session.routes.ts          # /sessions/* endpoints
+│   │   ├── auth.routes.ts             # /auth/* endpoints
+│   │   └── ...                         # device, telemetry, user, monitoring, security
+│   └── schemas/                    # Zod request/response validation
+│       ├── sync.schemas.ts
+│       ├── session.schemas.ts
+│       ├── user.schemas.ts
+│       └── validation-utils.ts         # Shared decimal, UUID, enum validators
+│
+├── config/                         # Configuration management
+│   ├── index.ts                        # Async config initialization (AWS Secrets Manager)
+│   └── auth.config.ts                  # Cognito + OAuth provider configuration
+│
+├── core/                           # DI infrastructure
+│   ├── controller-registry.ts          # Type-safe controller container
+│   ├── route-registry.ts              # Declarative route-to-controller binding
+│   ├── middleware-factory.ts           # Middleware instantiation with DI
+│   ├── controller.types.ts            # Controller interface contracts
+│   ├── type-guards.ts                 # Runtime type narrowing utilities
+│   └── types.ts                       # Shared core type aliases
+│
+├── events/                         # Domain event system
+│   ├── domain.events.ts                # 30+ typed event interfaces (EventTypeMap)
+│   └── domain-event.service.ts         # Pub/sub with dead-letter queue
+│
+├── jobs/                           # BullMQ async job processing
+│   ├── job-manager.service.ts          # Queue management + Redis configuration
+│   ├── job-processor.ts                # Job handler dispatch
+│   ├── job.types.ts                    # Job payload type definitions
+│   └── schedules.ts                    # Repeatable job schedules (cron)
+│
+├── models/                         # Zod schemas + Prisma type exports
+│   ├── index.ts                        # Validation schemas for all entities
+│   └── __tests__/                      # Schema validation test suites
+│
+├── realtime/                       # WebSocket infrastructure
+│   ├── contracts/events.ts             # Typed Socket.IO event contracts
+│   ├── WebSocketBroadcaster.ts         # User-scoped event emission
+│   └── index.ts                        # Socket.IO server initialization
+│
+├── repositories/                   # Prisma data access layer (20 repositories)
+│   ├── base.repository.ts             # Abstract base with error handling + soft delete
+│   ├── repository.factory.ts          # Lazy singleton repository instantiation
+│   ├── health-sample.repository.ts    # Health sample CRUD + batch upsert
+│   ├── session.repository.ts          # Session lifecycle + consumption queries
+│   ├── sync-change.repository.ts      # Sync change tracking
+│   ├── outbox-event.repository.ts     # Transactional outbox persistence
+│   ├── projection-checkpoint.repository.ts # Per-projection completion tracking
+│   ├── user-health-watermark.repository.ts # Monotonic watermark management
+│   └── ...                             # device, telemetry-cache, rollup, sleep, impact
+│
+├── services/                       # Business logic layer
+│   ├── healthSample.service.ts         # Health ingestion orchestration
+│   ├── health-aggregation.service.ts   # Metric aggregation computations
+│   ├── health-projection-coordinator.service.ts # CQRS projection fanout
+│   ├── health-projection-read.service.ts # Projection query service
+│   ├── health-insight-engine.service.ts # Rule-based health insights
+│   ├── healthIngestQueue.service.ts    # BullMQ batch offloading
+│   ├── product-impact-compute.ts       # Statistical product impact analysis
+│   ├── session.service.ts             # Session lifecycle management
+│   ├── session-telemetry.service.ts   # Telemetry cache computation
+│   ├── sync.service.ts                # Bidirectional sync orchestration
+│   ├── syncLease.service.ts           # Distributed sync locking
+│   ├── outbox.service.ts              # Transactional outbox writes
+│   ├── outbox-processor.service.ts    # Outbox polling + event dispatch
+│   ├── outbox-coalescing.ts           # Event deduplication + batching
+│   ├── auth.service.ts                # Auth flows (Cognito, Google OAuth)
+│   ├── cognito.service.ts             # AWS Cognito client wrapper
+│   ├── cache.service.ts               # Redis cache with tag-based invalidation
+│   ├── database.service.ts            # Prisma client lifecycle
+│   ├── logger.service.ts              # Structured logging
+│   ├── performanceMonitoring.service.ts # Runtime metrics + alerting
+│   ├── drift-detector.service.ts      # Schema/data drift detection
+│   ├── sync/
+│   │   ├── handlers/
+│   │   │   ├── session.handler.ts      # Session-specific sync merge logic
+│   │   │   └── device.handler.ts       # Device-specific sync merge logic
+│   │   ├── conflict-merge.ts           # Field-level conflict resolution engine
+│   │   ├── sync.types.ts              # Sync handler interface contracts
+│   │   └── __tests__/                  # Conflict merge test suite
+│   └── ...                             # security, rate limiting, request validation
+│
+├── subscribers/                    # Domain event handlers
+│   ├── analytics.subscriber.ts         # Consumption → DailyStat aggregation
+│   ├── session-telemetry.subscriber.ts # Session end → telemetry cache trigger
+│   └── domain.subscribers.ts           # Subscriber initialization + wiring
+│
+├── types/                          # TypeScript type definitions
+│   ├── auth.types.ts                   # Authentication types
+│   ├── cognito.types.ts               # AWS Cognito response types
+│   ├── express.d.ts                    # Express request augmentation
+│   ├── socket.io.d.ts                 # Socket.IO type extensions
+│   └── ...                             # middleware, request, database types
+│
+├── utils/                          # Shared utilities
+│   ├── AppError.ts                     # Structured error hierarchy
+│   ├── error-handler.ts               # Error classification + normalization
+│   ├── retry.util.ts                  # Exponential backoff with jitter
+│   ├── decimal-serializer.ts          # Prisma Decimal → JSON serialization
+│   ├── jwt-validation.utils.ts        # JWT secret strength validation
+│   ├── secure-id.utils.ts            # Cryptographic ID generation
+│   └── ...                             # auth, cognito, constants, correlation
+│
+└── websocket/
+    └── socket.service.ts               # Socket.IO authentication + room management
 
 prisma/
-├── schema.prisma           # Database schema (40+ models)
-└── migrations/             # Schema migration history
+└── schema.prisma                   # PostgreSQL schema (20 models, 10 enums)
 
 docs/
-├── ADRs/                   # Architectural Decision Records
-├── features/               # Feature deep-dives
-├── Architecture.md
-├── Sync-Backend.md
-├── HealthIngestion.md
-├── HealthProjection.md
-├── Data-Integrity.md
-├── Failure-Modes.md
-├── Decisions.md
-└── Worker-Scalability.md
+├── Architecture.md                 # System architecture + bootstrap lifecycle
+├── Sync-Backend.md                 # Sync engine specification
+├── HealthIngestion.md              # Ingestion pipeline deep-dive
+├── HealthProjection.md             # CQRS projection pipeline
+├── Data-Integrity.md               # ACID guarantees + concurrency control
+├── Failure-Modes.md                # Resilience patterns + recovery
+├── Decisions.md                    # 21 Architectural Decision Records
+├── Worker-Scalability.md           # BullMQ topology + auto-scaling
+├── ADRs/                           # Standalone ADR documents (5)
+└── features/                       # Feature deep-dives (3)
+
+media/
+├── diagrams/                       # Architecture SVG diagrams (10)
+└── MERMAID/                        # Mermaid-rendered diagrams
 ```
 
 </details>
