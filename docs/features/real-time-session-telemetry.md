@@ -59,7 +59,7 @@ graph TD
 - Resolution-aware downsampling — 1m for short sessions, 5m for long
 
 ## Key Files
-- `src/services/session-telemetry.service.ts`
-- `src/services/sessionTelemetryQueue.service.ts`
-- `src/subscribers/session-telemetry.subscriber.ts`
-- `src/realtime/WebSocketBroadcaster.ts`
+- `code-snippets/services/session-telemetry.service.ts`
+- `code-snippets/services/sessionTelemetryQueue.service.ts`
+- `code-snippets/subscribers/session-telemetry.subscriber.ts`
+- `code-snippets/realtime/WebSocketBroadcaster.ts`

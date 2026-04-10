@@ -35,8 +35,8 @@ All critical data mutations write an `OutboxEvent` record to a dedicated table *
 - **Two-Phase Commit (2PC):** Excessive complexity and performance overhead for this use case
 
 ## Key Files
-- `src/services/outbox.service.ts` — `addEvent`, `addEventInternal`
-- `src/services/outbox-processor.service.ts` — `processPendingEvents`, `processEvent`
-- `src/services/outbox-coalescing.ts` — `coalesceHealthPayloads`
-- `src/repositories/outbox-event.repository.ts` — `claimBatch`, `markAsCompleted`, `markAsDeadLetter`
+- `code-snippets/services/outbox.service.ts` — `addEvent`, `addEventInternal`
+- `code-snippets/services/outbox-processor.service.ts` — `processPendingEvents`, `processEvent`
+- `code-snippets/services/outbox-coalescing.ts` — `coalesceHealthPayloads`
+- `code-snippets/repositories/outbox-event.repository.ts` — `claimBatch`, `markAsCompleted`, `markAsDeadLetter`
 - `prisma/schema.prisma` — `OutboxEvent` model

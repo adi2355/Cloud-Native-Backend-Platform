@@ -19,7 +19,7 @@ A clear separation into API, Services, Repositories, and Persistence layers. Eac
 > **Goal:** Modularity, independent testability, and predictable change propagation.
 
 ### 2. Explicit dependency injection via a single composition root
-[`bootstrap.ts`](./src/bootstrap.ts) is the sole composition root. Every service receives its dependencies through constructor injection. No service locators, no ambient singletons, no hidden coupling. The entire dependency graph is visible in one file.
+[`bootstrap.ts`](./code-snippets/bootstrap.ts) is the sole composition root. Every service receives its dependencies through constructor injection. No service locators, no ambient singletons, no hidden coupling. The entire dependency graph is visible in one file.
 
 > **Goal:** Maximum testability, minimal coupling, and complete transparency of system wiring.
 
@@ -55,7 +55,7 @@ Critical definitions — health metric types, sync entity types, conflict resolu
 | Decision | Rationale |
 | :--- | :--- |
 | **PostgreSQL as canonical data store** | All data (including time-series via JSONB) consolidated into one store, simplifying persistence |
-| **Separate Web and Worker processes** | Independent scaling, resource isolation, distinct entry points ([`src/index.ts`](./src/index.ts) / [`src/worker.ts`](./src/worker.ts)) |
+| **Separate Web and Worker processes** | Independent scaling, resource isolation, distinct entry points ([`src/index.ts`](./code-snippets/index.ts) / [`src/worker.ts`](./code-snippets/worker.ts)) |
 | **Three-lane health ingestion** | HOT (recent), COLD (backfill), CHANGE (deletions) — each with distinct QoS and freshness guarantees |
 | **Dedicated Redis for BullMQ** | `noeviction` policy for job durability, isolated from API cache's `volatile-ttl` policy |
 | **Cursor-based sync** | O(log n) keyset pagination, stable under concurrent writes, enabling incremental pulls |
@@ -89,8 +89,8 @@ The AppPlatform backend operates within a broader ecosystem of clients, cloud in
 
 The backend deploys as two distinct process types:
 
-- **Web Service** ([`src/index.ts`](./src/index.ts)) — Handles synchronous HTTP API requests and WebSocket connections. Stateless, horizontally scalable behind a load balancer.
-- **Worker Service** ([`src/worker.ts`](./src/worker.ts)) — Processes asynchronous BullMQ jobs (projections, analytics, reconciliation). Independent scaling and resource isolation from the web service.
+- **Web Service** ([`src/index.ts`](./code-snippets/index.ts)) — Handles synchronous HTTP API requests and WebSocket connections. Stateless, horizontally scalable behind a load balancer.
+- **Worker Service** ([`src/worker.ts`](./code-snippets/worker.ts)) — Processes asynchronous BullMQ jobs (projections, analytics, reconciliation). Independent scaling and resource isolation from the web service.
 
 ---
 
@@ -98,11 +98,11 @@ The backend deploys as two distinct process types:
 
 ### Web Service
 
-Multiple stateless instances run behind a load balancer. [`socket.service.ts`](./src/websocket/socket.service.ts) uses `@socket.io/redis-adapter` for horizontal WebSocket scaling — events emitted from any instance reach all connected clients via Redis Pub/Sub.
+Multiple stateless instances run behind a load balancer. [`socket.service.ts`](./code-snippets/websocket/socket.service.ts) uses `@socket.io/redis-adapter` for horizontal WebSocket scaling — events emitted from any instance reach all connected clients via Redis Pub/Sub.
 
 ### Worker Service
 
-Multiple instances consume jobs from shared BullMQ queues via [`job-manager.service.ts`](./src/jobs/job-manager.service.ts). Redis ensures job durability across worker crashes. Per-queue concurrency controls resource utilization.
+Multiple instances consume jobs from shared BullMQ queues via [`job-manager.service.ts`](./code-snippets/jobs/job-manager.service.ts). Redis ensures job durability across worker crashes. Per-queue concurrency controls resource utilization.
 
 ### Horizontal Scaling
 
@@ -116,10 +116,10 @@ Multiple instances consume jobs from shared BullMQ queues via [`job-manager.serv
 
 | Store | Role | Configuration |
 | :--- | :--- | :--- |
-| **PostgreSQL** | Canonical data store | Managed (RDS/Neon), strong consistency, JSONB support. [`database.service.ts`](./src/services/database.service.ts) manages connections with serverless retry logic |
-| **Redis (API Cache)** | Response caching, rate limiting, distributed locks | `volatile-ttl` eviction policy via [`cache.service.ts`](./src/services/cache.service.ts) |
+| **PostgreSQL** | Canonical data store | Managed (RDS/Neon), strong consistency, JSONB support. [`database.service.ts`](./code-snippets/services/database.service.ts) manages connections with serverless retry logic |
+| **Redis (API Cache)** | Response caching, rate limiting, distributed locks | `volatile-ttl` eviction policy via [`cache.service.ts`](./code-snippets/services/cache.service.ts) |
 | **Redis (BullMQ/WS)** | Job queues, Socket.IO adapter | `noeviction` policy — strict separation prevents eviction conflicts |
-| **AWS S3** | Blob storage | Journal photos, analytics reports, database backups via [`s3.service.ts`](./src/services/s3.service.ts) |
+| **AWS S3** | Blob storage | Journal photos, analytics reports, database backups via [`s3.service.ts`](./code-snippets/services/s3.service.ts) |
 
 > **Key insight:** The architecture strictly separates Redis instances for API caching (`volatile-ttl`) and durable job queues (`noeviction`) to prevent eviction policy conflicts and ensure data integrity for background jobs.
 
@@ -164,14 +164,14 @@ graph TD
 
 ### API Layer
 
-Located in [`src/api/v1/`](./src/api/v1/), this layer handles incoming requests, applies cross-cutting concerns, and routes to business logic.
+Located in [`code-snippets/api/v1/`](./code-snippets/api/v1/), this layer handles incoming requests, applies cross-cutting concerns, and routes to business logic.
 
 | Component | Location | Responsibility |
 | :--- | :--- | :--- |
-| **Controllers** | [`src/api/v1/controllers/`](./src/api/v1/controllers/) | Thin request handlers — extract params, call services, format responses, delegate errors |
-| **Middleware** | [`src/api/v1/middleware/`](./src/api/v1/middleware/) | Cross-cutting concerns via `MiddlewareFactory` for consistent DI |
-| **Routes** | [`src/api/v1/routes/`](./src/api/v1/routes/) | Endpoint definitions with ordered middleware chains, registered via `RouteRegistry` in [`src/core/route-registry.ts`](./src/core/route-registry.ts) |
-| **Schemas** | [`src/api/v1/schemas/`](./src/api/v1/schemas/) + [`packages/shared/src/contracts/`](./packages/shared/src/contracts/) | Zod schemas for request/response validation — canonical SSOT for API contracts |
+| **Controllers** | [`code-snippets/api/v1/controllers/`](./code-snippets/api/v1/controllers/) | Thin request handlers — extract params, call services, format responses, delegate errors |
+| **Middleware** | [`code-snippets/api/v1/middleware/`](./code-snippets/api/v1/middleware/) | Cross-cutting concerns via `MiddlewareFactory` for consistent DI |
+| **Routes** | [`code-snippets/api/v1/routes/`](./code-snippets/api/v1/routes/) | Endpoint definitions with ordered middleware chains, registered via `RouteRegistry` in [`code-snippets/core/route-registry.ts`](./code-snippets/core/route-registry.ts) |
+| **Schemas** | [`code-snippets/api/v1/schemas/`](./code-snippets/api/v1/schemas/) + [`packages/shared/src/contracts/`](./packages/shared/src/contracts/) | Zod schemas for request/response validation — canonical SSOT for API contracts |
 
 <details>
 <summary><strong>Middleware Stack</strong></summary>
@@ -200,7 +200,7 @@ Located in [`src/api/v1/`](./src/api/v1/), this layer handles incoming requests,
 
 ### Services Layer
 
-Located in `src/services/`, this layer encapsulates all core business logic. Services coordinate repositories, other services, and external integrations.
+Located in `code-snippets/services/`, this layer encapsulates all core business logic. Services coordinate repositories, other services, and external integrations.
 
 <details>
 <summary><strong>Service Catalog</strong></summary>
@@ -278,24 +278,24 @@ Located in `src/services/`, this layer encapsulates all core business logic. Ser
 
 ### Repositories Layer
 
-Located in [`src/repositories/`](./src/repositories/), this layer abstracts all direct database access via Prisma ORM.
+Located in [`code-snippets/repositories/`](./code-snippets/repositories/), this layer abstracts all direct database access via Prisma ORM.
 
-- **`RepositoryFactory`** ([`repository.factory.ts`](./src/repositories/repository.factory.ts)) — Central mechanism for creating all repositories with consistent `PrismaClient`, `LoggerService`, and `PerformanceMonitoringService` injection.
+- **`RepositoryFactory`** ([`repository.factory.ts`](./code-snippets/repositories/repository.factory.ts)) — Central mechanism for creating all repositories with consistent `PrismaClient`, `LoggerService`, and `PerformanceMonitoringService` injection.
 - **Per-entity repositories** (e.g., `user.repository.ts`, `consumption.repository.ts`, `health-sample.repository.ts`, `sync-operation.repository.ts`) — Hide ORM details, enforce `userId`-scoped authorization to prevent IDOR, implement optimistic locking via `version` fields, and encapsulate complex query logic.
 
 ### Shared Contracts & Utilities
 
 | Package | Purpose |
 | :--- | :--- |
-| [`src/core/`](./src/core/) | DI framework utilities — `controller-registry.ts`, `middleware-factory.ts`, `route-registry.ts`, common type definitions |
-| [`src/utils/`](./src/utils/) | Helpers for authentication (`auth.utils.ts`), error handling (`error-handler.ts`), crypto, and device ID generation |
+| [`code-snippets/core/`](./code-snippets/core/) | DI framework utilities — `controller-registry.ts`, `middleware-factory.ts`, `route-registry.ts`, common type definitions |
+| [`code-snippets/utils/`](./code-snippets/utils/) | Helpers for authentication (`auth.utils.ts`), error handling (`error-handler.ts`), crypto, and device ID generation |
 | [`packages/shared/`](./packages/shared/) | **Cross-application type safety** — canonical entity types (`entity-types.ts`), Zod contracts (`health.contract.ts`, `sync-lease.contract.ts`), health config (metric types, units, normalization, precision, payload hashing), sync config (relation graph, cursor formats, conflict strategies) |
 
 ---
 
 ## Bootstrap & Dependency Injection
 
-[`bootstrap.ts`](./src/bootstrap.ts) is the single composition root — the sole, authoritative place responsible for instantiating every service, wiring all dependencies via constructor injection, and orchestrating initialization and shutdown in the correct order.
+[`bootstrap.ts`](./code-snippets/bootstrap.ts) is the single composition root — the sole, authoritative place responsible for instantiating every service, wiring all dependencies via constructor injection, and orchestrating initialization and shutdown in the correct order.
 
 <details>
 <summary><strong>Initialization Stages</strong></summary>
@@ -303,7 +303,7 @@ Located in [`src/repositories/`](./src/repositories/), this layer abstracts all 
 
 | Phase | Components | Purpose |
 | :--- | :--- | :--- |
-| **0** | OpenTelemetry SDK ([`instrumentation.ts`](./src/instrumentation.ts)) | Tracing and metrics collection before any app code loads — instruments Node.js, Express, Redis, PostgreSQL |
+| **0** | OpenTelemetry SDK ([`instrumentation.ts`](./code-snippets/instrumentation.ts)) | Tracing and metrics collection before any app code loads — instruments Node.js, Express, Redis, PostgreSQL |
 | **1** | `LoggerService`, `S3Service` | Foundational — `LoggerService` is a dependency for almost all other components |
 | **2** | `ConfigSecurityService`, `AuthConfig` | Load and validate all configuration, including secrets from AWS Secrets Manager. Immutable `Config` object frozen after loading |
 | **3** | `DatabaseService`, `CacheService`, `PerformanceMonitoringService`, `ProjectionCheckpointRepository`, `HealthProjectionCoordinatorService`, `HealthAggregationService`, `HealthProjectionReadService`, `HealthInsightEngineService` | Core infrastructure — database connections, caching, metrics, projection coordination |
@@ -465,7 +465,7 @@ After ingestion, raw health data changes are asynchronously transformed into pre
 - **Lease-based concurrency** — Prevents multiple workers from processing the same projection for the same event
 - **Watermark freshness** — `HealthProjectionReadService` overrides a row's status to `STALE` if its `sourceWatermark` is behind the current `UserHealthWatermark`
 - **Event coalescing** — `outbox-coalescing.ts` groups related events for processing efficiency
-- **Read-time insights** — [`health-insight-engine.service.ts`](./src/services/health-insight-engine.service.ts) generates deterministic insights from projection data using pure rule-based logic ([`health-insight-rules.ts`](./src/services/health-insight-rules.ts))
+- **Read-time insights** — [`health-insight-engine.service.ts`](./code-snippets/services/health-insight-engine.service.ts) generates deterministic insights from projection data using pure rule-based logic ([`health-insight-rules.ts`](./code-snippets/services/health-insight-rules.ts))
 
 > **Guarantee:** Individual projection failures don't block other projections. Watermarks provide explicit freshness tracking — no silent staleness.
 
@@ -492,8 +492,8 @@ The sync pipeline enables bidirectional data synchronization between multiple of
 | **Push idempotency** | `syncOperationId` + cached `resultPayload` in `SyncOperation` table — repeated pushes return cached results without reprocessing |
 | **Optimistic locking** | `version` fields on syncable entities detect conflicts when `clientVersion < serverVersion` |
 | **Conflict resolution** | Config-driven via `ENTITY_CONFLICT_CONFIG` from [`conflict-configs.ts`](./packages/shared/src/sync-config/conflict-configs.ts) — strategies: `LAST_WRITE_WINS`, `CLIENT_WINS`, `SERVER_WINS`, `MERGE`, `MANUAL` |
-| **Field-level policies** | For `MERGE` strategy: `LOCAL_WINS` (notes), `MERGE_ARRAYS` (tags), `MAX_VALUE` (counters), `MONOTONIC` (status). Pure merge via [`entity-merger.ts`](./src/services/sync/entity-merger.ts) |
-| **Entity handlers** | [`src/services/sync/handlers/`](./src/services/sync/handlers/) — entity-specific `create()`, `update()`, `delete()`, `fetchServerVersion()`, `merge()` with Zod validation and transactional writes |
+| **Field-level policies** | For `MERGE` strategy: `LOCAL_WINS` (notes), `MERGE_ARRAYS` (tags), `MAX_VALUE` (counters), `MONOTONIC` (status). Pure merge via [`entity-merger.ts`](./code-snippets/services/sync/entity-merger.ts) |
+| **Entity handlers** | [`code-snippets/services/sync/handlers/`](./code-snippets/services/sync/handlers/) — entity-specific `create()`, `update()`, `delete()`, `fetchServerVersion()`, `merge()` with Zod validation and transactional writes |
 | **Change tracking** | Every mutation writes to `SyncChange` table (source for pull sync). `SyncState` tracks `lastSyncCursor` per `(userId, deviceId)` |
 | **Distributed locks** | `SyncLeaseService` (Redis) for admission control + `SyncStateRepository` (PostgreSQL) for per-device serialization via `lockOwner`/`lockAcquiredAt` |
 
@@ -517,9 +517,9 @@ A dedicated worker process handles all background tasks, isolating compute-heavy
 
 | Component | Responsibility |
 | :--- | :--- |
-| [`JobManagerService`](./src/jobs/job-manager.service.ts) | Manages BullMQ `Queue` and `Worker` instances. Dedicated Redis with `noeviction`. Provides `enqueueJob()` for producers, `getQueueDepth()` for backpressure. Per-queue config (`maxQueueLen`, `concurrency`, `removeOnComplete/Fail`) |
-| [`JobProcessor`](./src/jobs/job-processor.ts) | Core dispatch logic in worker processes — delegates to specific services based on `JobNames` enum. Fault-isolated via `try/catch` with structured error logging |
-| [`schedules.ts`](./src/jobs/schedules.ts) | Recurring cron jobs via BullMQ repeatable jobs — analytics refresh, health ingest reaper, inventory reconciliation, stale session reconciliation |
+| [`JobManagerService`](./code-snippets/jobs/job-manager.service.ts) | Manages BullMQ `Queue` and `Worker` instances. Dedicated Redis with `noeviction`. Provides `enqueueJob()` for producers, `getQueueDepth()` for backpressure. Per-queue config (`maxQueueLen`, `concurrency`, `removeOnComplete/Fail`) |
+| [`JobProcessor`](./code-snippets/jobs/job-processor.ts) | Core dispatch logic in worker processes — delegates to specific services based on `JobNames` enum. Fault-isolated via `try/catch` with structured error logging |
+| [`schedules.ts`](./code-snippets/jobs/schedules.ts) | Recurring cron jobs via BullMQ repeatable jobs — analytics refresh, health ingest reaper, inventory reconciliation, stale session reconciliation |
 
 **Job Types:**
 
@@ -550,7 +550,7 @@ The backend supports real-time updates via Socket.IO WebSockets for live session
 3. Authenticated sockets join rooms: `user:{userId}`, `device:{deviceId}`, `session:{sessionId}`
 4. Domain events (e.g., `consumption.created`, `session.ended`) emitted by `DomainEventService`
 5. `WebSocketEventSubscriber` converts events to minimal, type-safe `RealtimeEnvelopeV1` (from [`packages/shared/src/realtime/contracts/events.ts`](./packages/shared/src/realtime/contracts/events.ts)) — includes `userId`, `entityId`, `eventType`, and cache-patch payload
-6. [`WebSocketBroadcaster`](./src/realtime/WebSocketBroadcaster.ts) emits to appropriate rooms via `socket.service.ts`
+6. [`WebSocketBroadcaster`](./code-snippets/realtime/WebSocketBroadcaster.ts) emits to appropriate rooms via `socket.service.ts`
 7. Clients patch local React Query caches directly from the payload — no full API refetch
 
 **Reliability:**
@@ -599,7 +599,7 @@ The **canonical, primary, and single source of truth** for all application data.
 | **Optimistic locking** | `version` fields (`@default(1)`) for concurrency control across many models |
 | **TimescaleDB (inferred)** | `HealthSample` table's time-series nature strongly implies hypertable, compression, and retention policies |
 
-[`DatabaseService`](./src/services/database.service.ts) manages `PrismaClient` connections, transactions, and retry logic optimized for serverless environments (e.g., Neon cold starts).
+[`DatabaseService`](./code-snippets/services/database.service.ts) manages `PrismaClient` connections, transactions, and retry logic optimized for serverless environments (e.g., Neon cold starts).
 
 ### Redis
 
@@ -607,12 +607,12 @@ Two strictly separated instances prevent eviction policy conflicts:
 
 | Instance | Policy | Usage |
 | :--- | :--- | :--- |
-| **API Cache** | `volatile-ttl` | Response caching ([`apiCache.middleware.ts`](./src/api/v1/middleware/apiCache.middleware.ts)), distributed advisory locks (e.g., `SyncLeaseService`, `UserConsumptionProfileService.performEMALearning`), rate limit counters ([`authRateLimit.middleware.ts`](./src/api/v1/middleware/authRateLimit.middleware.ts), [`rateLimitQueue.middleware.ts`](./src/api/v1/middleware/rateLimitQueue.middleware.ts)) |
-| **BullMQ / WebSocket** | `noeviction` | BullMQ job data, queues, and locks ([`job-manager.service.ts`](./src/jobs/job-manager.service.ts)); Socket.IO Redis adapter for horizontal WebSocket scaling ([`socket.service.ts`](./src/websocket/socket.service.ts)) |
+| **API Cache** | `volatile-ttl` | Response caching ([`apiCache.middleware.ts`](./code-snippets/api/v1/middleware/apiCache.middleware.ts)), distributed advisory locks (e.g., `SyncLeaseService`, `UserConsumptionProfileService.performEMALearning`), rate limit counters ([`authRateLimit.middleware.ts`](./code-snippets/api/v1/middleware/authRateLimit.middleware.ts), [`rateLimitQueue.middleware.ts`](./code-snippets/api/v1/middleware/rateLimitQueue.middleware.ts)) |
+| **BullMQ / WebSocket** | `noeviction` | BullMQ job data, queues, and locks ([`job-manager.service.ts`](./code-snippets/jobs/job-manager.service.ts)); Socket.IO Redis adapter for horizontal WebSocket scaling ([`socket.service.ts`](./code-snippets/websocket/socket.service.ts)) |
 
 ### AWS S3
 
-Durable blob storage via [`S3Service`](./src/services/s3.service.ts):
+Durable blob storage via [`S3Service`](./code-snippets/services/s3.service.ts):
 
 - **User-uploaded content** — Journal entry photos (`journal.service.ts`)
 - **System-generated artifacts** — Analytics reports, user data exports
@@ -624,19 +624,19 @@ Durable blob storage via [`S3Service`](./src/services/s3.service.ts):
 
 ### Authentication & Authorization
 
-- **Authentication** — AWS Cognito as IdP via [`CognitoService`](./src/services/cognito.service.ts). JWT validation by [`auth.middleware.ts`](./src/api/v1/middleware/auth.middleware.ts) (HTTP) and [`socket.service.ts`](./src/websocket/socket.service.ts) (WebSocket). Federated Google OAuth supported
-- **Authorization** — RBAC enforced via [`authorization.middleware.ts`](./src/api/v1/middleware/authorization.middleware.ts) and controller-level guards (e.g., `createRequireAdmin`). `UserRepository` maps Cognito IDs to internal user IDs for consistent authorization checks
-- **Protection** — [`auth-monitoring.middleware.ts`](./src/api/v1/middleware/auth-monitoring.middleware.ts) logs suspicious authentication patterns. [`authRateLimit.middleware.ts`](./src/api/v1/middleware/authRateLimit.middleware.ts) provides brute-force protection, account lockout, and CAPTCHA integration via `AuthRateLimitService` (Redis-backed)
+- **Authentication** — AWS Cognito as IdP via [`CognitoService`](./code-snippets/services/cognito.service.ts). JWT validation by [`auth.middleware.ts`](./code-snippets/api/v1/middleware/auth.middleware.ts) (HTTP) and [`socket.service.ts`](./code-snippets/websocket/socket.service.ts) (WebSocket). Federated Google OAuth supported
+- **Authorization** — RBAC enforced via [`authorization.middleware.ts`](./code-snippets/api/v1/middleware/authorization.middleware.ts) and controller-level guards (e.g., `createRequireAdmin`). `UserRepository` maps Cognito IDs to internal user IDs for consistent authorization checks
+- **Protection** — [`auth-monitoring.middleware.ts`](./code-snippets/api/v1/middleware/auth-monitoring.middleware.ts) logs suspicious authentication patterns. [`authRateLimit.middleware.ts`](./code-snippets/api/v1/middleware/authRateLimit.middleware.ts) provides brute-force protection, account lockout, and CAPTCHA integration via `AuthRateLimitService` (Redis-backed)
 
 ### Security & Compliance
 
 | Concern | Implementation |
 | :--- | :--- |
-| **Secrets** | [`SecretsService`](./src/services/secrets.service.ts) fetches from AWS Secrets Manager; [`ConfigSecurityService`](./src/services/configSecurity.service.ts) validates, enforces minimum JWT secret lengths, and freezes configuration |
-| **HTTPS** | [`httpsEnforcement.middleware.ts`](./src/api/v1/middleware/httpsEnforcement.middleware.ts) redirects HTTP to HTTPS in production, injects HSTS |
-| **Input validation** | Strict Zod schemas (`packages/shared/src/contracts/*`, `src/api/v1/schemas/*`) at API boundaries via [`requestValidation.middleware.ts`](./src/api/v1/middleware/requestValidation.middleware.ts). Payload size limits enforced by [`jsonBodyParser.middleware.ts`](./src/api/v1/middleware/jsonBodyParser.middleware.ts) |
-| **Session integrity** | [`sessionSecurity.middleware.ts`](./src/api/v1/middleware/sessionSecurity.middleware.ts) performs device fingerprinting and `X-Session-ID` validation for anomaly detection |
-| **PHI redaction** | [`ai-phi-redaction.service.ts`](./src/services/ai-phi-redaction.service.ts) strips Protected Health Information before AI model submission |
+| **Secrets** | [`SecretsService`](./code-snippets/services/secrets.service.ts) fetches from AWS Secrets Manager; [`ConfigSecurityService`](./code-snippets/services/configSecurity.service.ts) validates, enforces minimum JWT secret lengths, and freezes configuration |
+| **HTTPS** | [`httpsEnforcement.middleware.ts`](./code-snippets/api/v1/middleware/httpsEnforcement.middleware.ts) redirects HTTP to HTTPS in production, injects HSTS |
+| **Input validation** | Strict Zod schemas (`packages/shared/src/contracts/*`, `code-snippets/api/v1/schemas/*`) at API boundaries via [`requestValidation.middleware.ts`](./code-snippets/api/v1/middleware/requestValidation.middleware.ts). Payload size limits enforced by [`jsonBodyParser.middleware.ts`](./code-snippets/api/v1/middleware/jsonBodyParser.middleware.ts) |
+| **Session integrity** | [`sessionSecurity.middleware.ts`](./code-snippets/api/v1/middleware/sessionSecurity.middleware.ts) performs device fingerprinting and `X-Session-ID` validation for anomaly detection |
+| **PHI redaction** | [`ai-phi-redaction.service.ts`](./code-snippets/services/ai-phi-redaction.service.ts) strips Protected Health Information before AI model submission |
 | **Data integrity** | Optimistic locking, transactional outbox, strict schema validation |
 
 > For detailed data integrity guarantees, see [`DATA-INTEGRITY-GUARANTEES.MD`](./DATA-INTEGRITY-GUARANTEES.MD).
@@ -645,15 +645,15 @@ Durable blob storage via [`S3Service`](./src/services/s3.service.ts):
 
 | Pillar | Implementation |
 | :--- | :--- |
-| **Logging** | [`LoggerService`](./src/services/logger.service.ts) — structured JSON, log levels, categories. Integrates with [`CloudWatchLogsService`](./src/services/cloudwatch-logs.service.ts) for centralized aggregation |
-| **Metrics** | [`PerformanceMonitoringService`](./src/services/performanceMonitoring.service.ts) — API response times, DB query durations, cache hit rates, job processing times. OpenTelemetry-compatible export |
-| **Tracing** | `CorrelationContextManager` via [`correlationContext.middleware.ts`](./src/api/v1/middleware/correlationContext.middleware.ts) — `X-Correlation-ID` propagation across HTTP, service calls, and async events |
+| **Logging** | [`LoggerService`](./code-snippets/services/logger.service.ts) — structured JSON, log levels, categories. Integrates with [`CloudWatchLogsService`](./code-snippets/services/cloudwatch-logs.service.ts) for centralized aggregation |
+| **Metrics** | [`PerformanceMonitoringService`](./code-snippets/services/performanceMonitoring.service.ts) — API response times, DB query durations, cache hit rates, job processing times. OpenTelemetry-compatible export |
+| **Tracing** | `CorrelationContextManager` via [`correlationContext.middleware.ts`](./code-snippets/api/v1/middleware/correlationContext.middleware.ts) — `X-Correlation-ID` propagation across HTTP, service calls, and async events |
 | **Health checks** | `/health`, `/health/rate-limit`, `/api/v1/monitoring/health` — real-time service status and detailed metrics |
 
 ### Configuration Management
 
-- **Centralized & secure** — [`ConfigSecurityService`](./src/services/configSecurity.service.ts) loads from environment and AWS Secrets Manager (via `SecretsService`)
-- **Immutable** — All `Config` objects frozen after loading ([`initializeConfig`](./src/config/index.ts)) to prevent runtime tampering
+- **Centralized & secure** — [`ConfigSecurityService`](./code-snippets/services/configSecurity.service.ts) loads from environment and AWS Secrets Manager (via `SecretsService`)
+- **Immutable** — All `Config` objects frozen after loading ([`initializeConfig`](./code-snippets/config/index.ts)) to prevent runtime tampering
 - **Validated** — Zod schemas enforce security policies at startup (JWT secret strength, CORS origins in production)
 - **Shared** — `packages/shared` defines common configuration contracts for frontend/backend consistency
 
@@ -663,14 +663,14 @@ Durable blob storage via [`S3Service`](./src/services/s3.service.ts):
 
 | Integration | Service | Purpose |
 | :--- | :--- | :--- |
-| **AWS Cognito** | [`cognito.service.ts`](./src/services/cognito.service.ts) | User identity management (user pools), authentication, token validation |
-| **AWS Secrets Manager** | [`secrets.service.ts`](./src/services/secrets.service.ts) | Secure storage and retrieval of API keys, DB credentials, sensitive config |
-| **AWS S3** | [`s3.service.ts`](./src/services/s3.service.ts) | Durable blob storage for user content, system reports, and database backups |
-| **AWS CloudWatch** | [`cloudwatch-logs.service.ts`](./src/services/cloudwatch-logs.service.ts) | Centralized log aggregation, monitoring, and analysis |
-| **OpenTelemetry SDK** | [`instrumentation.ts`](./src/instrumentation.ts) | Node.js instrumentation for traces and metrics collection |
+| **AWS Cognito** | [`cognito.service.ts`](./code-snippets/services/cognito.service.ts) | User identity management (user pools), authentication, token validation |
+| **AWS Secrets Manager** | [`secrets.service.ts`](./code-snippets/services/secrets.service.ts) | Secure storage and retrieval of API keys, DB credentials, sensitive config |
+| **AWS S3** | [`s3.service.ts`](./code-snippets/services/s3.service.ts) | Durable blob storage for user content, system reports, and database backups |
+| **AWS CloudWatch** | [`cloudwatch-logs.service.ts`](./code-snippets/services/cloudwatch-logs.service.ts) | Centralized log aggregation, monitoring, and analysis |
+| **OpenTelemetry SDK** | [`instrumentation.ts`](./code-snippets/instrumentation.ts) | Node.js instrumentation for traces and metrics collection |
 | **OpenTelemetry Collector** | *(inferred)* | Agent for exporting traces (Jaeger/Datadog) and metrics (Prometheus/Grafana) |
-| **Google OAuth** | [`auth.service.ts`](./src/services/auth.service.ts) | Federated authentication with server-side Google ID token validation |
-| **Anthropic AI** | [`ai.service.ts`](./src/services/ai.service.ts) | LLM-powered journal analysis, weekly reports, product recommendations. Key securely loaded from Secrets Manager |
+| **Google OAuth** | [`auth.service.ts`](./code-snippets/services/auth.service.ts) | Federated authentication with server-side Google ID token validation |
+| **Anthropic AI** | [`ai.service.ts`](./code-snippets/services/ai.service.ts) | LLM-powered journal analysis, weekly reports, product recommendations. Key securely loaded from Secrets Manager |
 | **HealthKit / Health Connect** | *(client-side only)* | Mobile clients collect data via OS SDKs, then batch-upload to `/health/samples/batch-upsert` |
 
 ---
@@ -687,7 +687,7 @@ Core business logic and complex transformations are encapsulated in pure, determ
 
 ### Composition Root
 
-[`bootstrap.ts`](./src/bootstrap.ts) centralizes all instantiation and wiring via constructor injection. This eliminates hidden dependencies and promotes explicit contracts. The trade-off is verbosity for very large applications — the entire dependency graph lives in one file.
+[`bootstrap.ts`](./code-snippets/bootstrap.ts) centralizes all instantiation and wiring via constructor injection. This eliminates hidden dependencies and promotes explicit contracts. The trade-off is verbosity for very large applications — the entire dependency graph lives in one file.
 
 ### CQRS
 
@@ -725,7 +725,7 @@ Services organized around business domains reduce cognitive load and enable inde
 
 ### Deprecated Components
 
-- **`src/models/dynamodb-schemas.ts`** — Remnant of a previous DynamoDB phase. All services now use PostgreSQL. **Recommendation:** Remove from codebase.
+- **`code-snippets/models/dynamodb-schemas.ts`** — Remnant of a previous DynamoDB phase. All services now use PostgreSQL. **Recommendation:** Remove from codebase.
 
 ### Incomplete Features
 

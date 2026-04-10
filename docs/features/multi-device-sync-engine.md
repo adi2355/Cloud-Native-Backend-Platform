@@ -100,7 +100,7 @@ sequenceDiagram
 - Corrupted cursor -> strict validation returns 400
 
 ## Key Files
-- `src/services/sync.service.ts`
-- `src/services/sync/handlers/*.handler.ts`
+- `code-snippets/services/sync.service.ts`
+- `code-snippets/services/sync/handlers/*.handler.ts`
 - `packages/shared/src/sync-config/conflict-configs.ts`
 - `packages/shared/src/sync-config/cursor.ts`

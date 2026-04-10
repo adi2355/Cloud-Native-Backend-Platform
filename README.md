@@ -509,7 +509,7 @@ erDiagram
 <br>
 
 ```
-src/
+code-snippets/
 ├── index.ts                        # Application entry point
 ├── app.ts                          # Express application setup
 ├── server.ts                       # HTTP server lifecycle management

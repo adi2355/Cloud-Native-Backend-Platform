@@ -89,7 +89,7 @@ graph TD
 - Privacy violations -> server-side gating, PHI redaction
 
 ## Key Files
-- `src/services/healthSample.service.ts`
-- `src/repositories/health-sample.repository.ts`
-- `src/services/healthIngestQueue.service.ts`
-- `src/services/ai-phi-redaction.service.ts`
+- `code-snippets/services/healthSample.service.ts`
+- `code-snippets/repositories/health-sample.repository.ts`
+- `code-snippets/services/healthIngestQueue.service.ts`
+- `code-snippets/services/ai-phi-redaction.service.ts`

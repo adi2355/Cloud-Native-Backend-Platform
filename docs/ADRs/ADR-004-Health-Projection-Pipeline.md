@@ -42,8 +42,8 @@ Implement a **CQRS Health Projection Pipeline**:
 - **Database materialized views:** Expensive `REFRESH CONCURRENTLY` on every sample change
 
 ## Key Files
-- `src/services/health-projection-coordinator.service.ts` — Orchestrator + handler implementations
-- `src/repositories/projection-checkpoint.repository.ts` — Checkpoint CRUD
-- `src/repositories/user-health-watermark.repository.ts` — Watermark management
-- `src/services/health-projection-read.service.ts` — Read model query service
+- `code-snippets/services/health-projection-coordinator.service.ts` — Orchestrator + handler implementations
+- `code-snippets/repositories/projection-checkpoint.repository.ts` — Checkpoint CRUD
+- `code-snippets/repositories/user-health-watermark.repository.ts` — Watermark management
+- `code-snippets/services/health-projection-read.service.ts` — Read model query service
 - `packages/shared/src/contracts/health-projection.contract.ts` — DTOs, `ProjectionFreshnessMeta`

@@ -44,8 +44,8 @@ Implement **cursor-based bidirectional synchronization** with **config-driven co
 - **External sync libraries (Couchbase, AppSync):** Vendor lock-in; insufficient control over merge semantics
 
 ## Key Files
-- `src/services/sync.service.ts` — `processPushSync`, `getIncrementalChanges`, `detectConflict`
-- `src/services/sync/handlers/*.handler.ts` — Entity-specific merge implementations
+- `code-snippets/services/sync.service.ts` — `processPushSync`, `getIncrementalChanges`, `detectConflict`
+- `code-snippets/services/sync/handlers/*.handler.ts` — Entity-specific merge implementations
 - `packages/shared/src/sync-config/conflict-configs.ts` — `ENTITY_CONFLICT_CONFIG`
 - `packages/shared/src/sync-config/cursor.ts` — Cursor encode/decode/advance
 - `packages/shared/src/sync-config/entity-types.ts` — `ENTITY_TYPES`, `ENTITY_SYNC_ORDER`
