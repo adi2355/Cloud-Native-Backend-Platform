@@ -311,7 +311,7 @@ For granular analysis of each subsystem, refer to the domain-specific documentat
 | [**Worker Scalability**](docs/Worker-Scalability.md) | BullMQ topology, concurrency control, backpressure, distributed locks, and auto-scaling. |
 | [**Multi-Device Sync Engine**](docs/features/multi-device-sync-engine.md) | Bidirectional sync feature deep-dive with conflict resolution and cursor semantics. |
 | [**Idempotent Health Ingestion**](docs/features/idempotent-health-ingestion.md) | Two-layer idempotency, batch processing, privacy gating, and PHI redaction. |
-| [**Real-Time Session Telemetry**](docs/features/real-time-session-telemetry.md) | Watermark-based caching, bounded compute, WebSocket delivery, and async recomputation. |
+| [**RealTime Session Telemetry**](docs/features/real-time-session-telemetry.md) | Watermark-based caching, bounded compute, WebSocket delivery, and async recomputation. |
 | [**ADR-001: Transactional Outbox**](docs/ADRs/ADR-001-Transactional-Outbox-Pattern.md) | Outbox pattern, event coalescing, retry/dead-letter, and crash safety. |
 | [**ADR-002: Cursor-Based Sync**](docs/ADRs/ADR-002-Cursor-Based-Bidirectional-Sync.md) | Composite cursors, optimistic locking, and config-driven merge policies. |
 | [**ADR-003: Dual-Driver Health Ingestion**](docs/ADRs/ADR-003-Dual-Driver-Health-Ingestion.md) | Native Swift + TypeScript fallback driver architecture for iOS HealthKit. |
