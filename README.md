@@ -14,56 +14,6 @@ This repository details the architecture of a cloud-native, event-driven Node.js
 We designed this system for the real world, not the happy path. It is engineered to handle unreliable mobile networks, long offline periods, bursty health data ingestion, and concurrent multi-device modifications. The architecture prioritizes **data integrity**, **idempotency**, and **explicit consistency tracking**. The platform remains correct, observable, and recoverable under all operating conditions.
 
 
-<br>
-
-## Technology Stack
-
-
-
-<table>
-<tr>
-<td><strong>Runtime & Language</strong></td>
-<td><img src="https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js" /> <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" /></td>
-</tr>
-<tr>
-<td><strong>API Framework</strong></td>
-<td><img src="https://img.shields.io/badge/Express.js-000000?style=flat-square&logo=express&logoColor=white" alt="Express.js" /></td>
-</tr>
-<tr>
-<td><strong>Database & ORM</strong></td>
-<td><img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL" /> <img src="https://img.shields.io/badge/Prisma-2D3748?style=flat-square&logo=prisma&logoColor=white" alt="Prisma" /></td>
-</tr>
-<tr>
-<td><strong>Cache & Background Jobs</strong></td>
-<td><img src="https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white" alt="Redis" /> <img src="https://img.shields.io/badge/BullMQ-FF4081?style=flat-square&logoColor=white" alt="BullMQ" /></td>
-</tr>
-<tr>
-<td><strong>Authentication & Security</strong></td>
-<td><img src="https://img.shields.io/badge/AWS_Cognito-232F3E?style=flat-square&logo=amazonaws&logoColor=white" alt="AWS Cognito" /> <img src="https://img.shields.io/badge/OAuth_2.0-3A3B3C?style=flat-square&logoColor=white" alt="OAuth 2.0" /> <img src="https://img.shields.io/badge/JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white" alt="JWT" /></td>
-</tr>
-<tr>
-<td><strong>Real-Time & Sync</strong></td>
-<td><img src="https://img.shields.io/badge/Socket.IO-010101?style=flat-square&logo=socketdotio&logoColor=white" alt="Socket.IO" /> <img src="https://img.shields.io/badge/WebSocket-010101?style=flat-square&logoColor=white" alt="WebSocket" /></td>
-</tr>
-<tr>
-<td><strong>Validation & Observability</strong></td>
-<td><img src="https://img.shields.io/badge/Zod-3E67B1?style=flat-square&logo=zod&logoColor=white" alt="Zod" /> <img src="https://img.shields.io/badge/OpenTelemetry-000000?style=flat-square&logo=opentelemetry&logoColor=white" alt="OpenTelemetry" /> <img src="https://img.shields.io/badge/Prometheus-E6522C?style=flat-square&logo=prometheus&logoColor=white" alt="Prometheus" /> <img src="https://img.shields.io/badge/Grafana-F46800?style=flat-square&logo=grafana&logoColor=white" alt="Grafana" /></td>
-</tr>
-<tr>
-<td><strong>Cloud Infrastructure</strong></td>
-<td><img src="https://img.shields.io/badge/AWS_S3-569A31?style=flat-square&logo=amazons3&logoColor=white" alt="AWS S3" /> <img src="https://img.shields.io/badge/AWS_Secrets_Manager-DD344C?style=flat-square&logo=amazonaws&logoColor=white" alt="AWS Secrets" /> <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker" /> <img src="https://img.shields.io/badge/Render-46E3B7?style=flat-square&logo=render&logoColor=white" alt="Render" /></td>
-</tr>
-<tr>
-<td><strong>Testing & API</strong></td>
-<td><img src="https://img.shields.io/badge/Jest-C21325?style=flat-square&logo=jest&logoColor=white" alt="Jest" /> <img src="https://img.shields.io/badge/Postman-FF6C37?style=flat-square&logo=postman&logoColor=white" alt="Postman" /></td>
-</tr>
-<tr>
-<td><strong>CI/CD</strong></td>
-<td><img src="https://img.shields.io/badge/GitLab_CI%2FCD-FC6D26?style=flat-square&logo=gitlab&logoColor=white" alt="GitLab CI/CD" /> <img src="https://img.shields.io/badge/Git-F05032?style=flat-square&logo=git&logoColor=white" alt="Git" /></td>
-</tr>
-</table>
-
-
 ## Engineering Principles
 
 ### 1. Guarantee event delivery through transactional atomicity
