@@ -717,25 +717,6 @@ Services organized around business domains reduce cognitive load and enable inde
 
 ---
 
-## Known Gaps & Evolving Areas
-
-<details>
-<summary><strong>Gaps, Risks, and Future Work</strong></summary>
-<br>
-
-### Deprecated Components
-
-- **`code-snippets/models/dynamodb-schemas.ts`** — Remnant of a previous DynamoDB phase. All services now use PostgreSQL. **Recommendation:** Remove from codebase.
-
-### Incomplete Features
-
-- **Multi-device health sync** — `healthSourceDeviceScope` flag exists in [`HealthSourceRegistry.ts`](./packages/backend/src/services/health/HealthSourceRegistry.ts), but comprehensive multi-device merging for health samples (beyond basic deduplication) is not fully implemented. Users with multiple health sources may experience inconsistencies.
-- **Health Connect background delivery** — Android background ingestion is explicitly deferred in `HealthKitContext.tsx`. Android users may experience less frequent health data sync compared to iOS.
-
-### Unclear / Inferred Behaviors
-
-- **Client token refresh** — The explicit refresh loop within `HealthSyncService` when auth fails (401) is not fully visible. `BackendAPIClient` may handle this transparently, but if not, retry loops with invalid tokens could cause unnecessary network traffic.
-- **Trace context propagation** — OpenTelemetry is initialized and correlation IDs propagate via middleware, but ensuring context propagation across all async boundaries (e.g., `OutboxProcessorService` dispatching) and external integrations requires continuous verification.
 
 
 
