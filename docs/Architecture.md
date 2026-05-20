@@ -735,16 +735,9 @@ Services organized around business domains reduce cognitive load and enable inde
 ### Unclear / Inferred Behaviors
 
 - **Client token refresh** — The explicit refresh loop within `HealthSyncService` when auth fails (401) is not fully visible. `BackendAPIClient` may handle this transparently, but if not, retry loops with invalid tokens could cause unnecessary network traffic.
-- **Endpoint-level idempotency** — Core batch endpoints (`health/samples/batch-upsert`, `sync/push`) have explicit idempotency. Standard CRUD endpoints may rely on simpler implicit guarantees. **Recommendation:** Conduct an idempotency audit across all endpoints.
 - **Trace context propagation** — OpenTelemetry is initialized and correlation IDs propagate via middleware, but ensuring context propagation across all async boundaries (e.g., `OutboxProcessorService` dispatching) and external integrations requires continuous verification.
 
-### Operational Risks
 
-- **TimescaleDB configuration** — `HealthSample` strongly implies TimescaleDB usage (hypertable, compression, retention), but explicit configuration in `database.service.ts` or `bootstrap.ts` is not documented. Without proper setup, time-series query performance could degrade at scale.
-
-### Missing Documentation
-
-- **ADRs** — The `DECISIONS/` folder structure implies Architectural Decision Records, but no actual ADR files are provided. Key architectural decisions should be formally documented to prevent architecture drift.
 
 </details>
 
